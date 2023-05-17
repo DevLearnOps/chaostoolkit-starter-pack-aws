@@ -1,0 +1,57 @@
+title: "ALB security group swap"
+description: |
+  Verify application security configuration.
+  Swapping ALB (Application Load Balancer) security groups with a dummy group
+  with wide open access policies should stop requests from reaching the target
+  application.
+
+contributions:
+  security: "high"
+  reliability: "low"
+  scalability: "low"
+
+configuration:
+  # AWS Cloudwatch metric ingestion delay is about 3m
+  forbidden_endpoint: "https://www.google.com"
+  tf__target_service_secgroup: sg-0ad97dde3d3ef64e2
+  tf_conf__retain: true
+
+controls:
+  - name: terraform
+    provider:
+      type: python
+      module: chaostf.control
+
+method:
+  - type: action
+    name: "wait_service_stable"
+    provider:
+      type: python
+      module: chaosaws_extended.ecs.actions
+      func: wait_for_service_stable
+      arguments:
+        cluster: ${tf_out__chaosprobe_cluster}
+        service: ${tf_out__chaosprobe_service}
+        timeout_minutes: 10
+    pauses:
+      after: 10
+
+steady-state-hypothesis:
+  title: "Ningx web server is available"
+  probes:
+    - type: probe
+      name: "should-have-no-successful-requests"
+      tolerance:
+        type: jsonpath
+        path: "$.body.error_count"
+        expect: 3
+      provider:
+        type: http
+        url: "${tf_out__dns_name}/http/egress"
+        method: "POST"
+        headers:
+          Content-Type: "application/json"
+        arguments:
+          url: "https://www.google.com"
+          repeat: 3
+          timeout: 1

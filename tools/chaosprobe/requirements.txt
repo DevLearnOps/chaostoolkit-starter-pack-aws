@@ -1,0 +1,4 @@
+starlette
+structlog
+requests
+uvicorn
