@@ -1,9 +1,10 @@
-title: "ALB security group swap"
+title: "Exfiltration test with ECS service security groups"
 description: |
   Verify application security configuration.
-  Swapping ALB (Application Load Balancer) security groups with a dummy group
-  with wide open access policies should stop requests from reaching the target
-  application.
+  Deploy a new probe in an ECS cluster assigning the same security group as
+  as the service under test. The probe service will attempt to reach some
+  forbidden urls to verify the security group rules are effective, and not
+  just passing a static analysis.
 
 contributions:
   security: "high"
@@ -11,7 +12,6 @@ contributions:
   scalability: "low"
 
 configuration:
-  # AWS Cloudwatch metric ingestion delay is about 3m
   forbidden_endpoint: "https://www.google.com"
   tf__target_service_secgroup: sg-0ad97dde3d3ef64e2
   tf_conf__retain: true
@@ -37,10 +37,10 @@ method:
       after: 10
 
 steady-state-hypothesis:
-  title: "Ningx web server is available"
+  title: "Forbidden urls are blocked"
   probes:
     - type: probe
-      name: "should-have-no-successful-requests"
+      name: "all-requests-attempted-should-fail"
       tolerance:
         type: jsonpath
         path: "$.body.error_count"

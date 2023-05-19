@@ -8,6 +8,8 @@ chaostoolkit = "*"
 chaostoolkit-aws = "*"
 chaostoolkit-addons = "*"
 chaostoolkit-k6 = "*"
+chaostoolkit-terraform = {git = "https://github.com/mcastellin/chaostoolkit-terraform.git"}
+jsonpath2 = "*"
 
 [dev-packages]
 
