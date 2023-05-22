@@ -13,6 +13,7 @@ contributions:
 configuration:
   # AWS Cloudwatch metric ingestion delay is about 3m
   stress_duration: "3m"
+  tf_conf__silent: true
 
 controls:
   - name: terraform

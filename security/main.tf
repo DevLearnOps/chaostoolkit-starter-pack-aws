@@ -167,7 +167,9 @@ module "ecs" {
           from_port                = local.container_port
           to_port                  = local.container_port
           protocol                 = "tcp"
-          source_security_group_id = module.alb_sg.security_group_id
+          # Chaos :: Insecure practice should get discovered by alb/ecs-alb-insgress/experiment.yaml
+          cidr_blocks = ["0.0.0.0/0"]
+          #source_security_group_id = module.alb_sg.security_group_id
         }
         egress_vpc_cidr = {
           type        = "egress"
