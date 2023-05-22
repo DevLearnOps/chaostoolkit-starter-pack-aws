@@ -13,17 +13,12 @@ contributions:
 configuration:
   # AWS Cloudwatch metric ingestion delay is about 3m
   stress_duration: "3m"
-  alb_name: null
-  alb_secgroup_id: null
-  dummy_secgroup_id:
-    type: probe
-    name: "read-ssm-param"
+
+controls:
+  - name: terraform
     provider:
       type: python
-      module: chaosaws_extended.ssm.probes
-      func: get_parameter
-      arguments:
-        parameter_name: "/chaos/alb/dummy-alb-secgroup"
+      module: chaostf.control
 
 method:
   - type: action
@@ -34,9 +29,9 @@ method:
       func: set_security_groups
       arguments:
         load_balancer_names:
-          - "${alb_name}"
+          - "${tf_out__alb_name}"
         security_group_ids:
-          - "${dummy_secgroup_id}"
+          - "${tf_out__dummy_alb_id}"
 
   - type: action
     name: "stress-endpoint-with-simulated-traffic"
@@ -45,7 +40,7 @@ method:
       module: chaosk6.actions
       func: stress_endpoint
       arguments:
-        endpoint: "http://chaos-Appli-WII0SYITLS8C-882794639.us-east-1.elb.amazonaws.com"
+        endpoint: "${tf_out__alb_public_url}"
         vus: 2
         duration: ${stress_duration}
 
@@ -64,7 +59,7 @@ steady-state-hypothesis:
           metric_name: HTTPCode_Target_2XX_Count
           dimensions:
             - Name: "LoadBalancer"
-              Value: "app/chaos-Appli-WII0SYITLS8C/8a84528e867aa64b"
+              Value: "${tf_out__alb_arn_suffix}"
           statistic: "Sum"
           unit: "Count"
           duration: 60
@@ -80,6 +75,6 @@ rollbacks:
       func: set_security_groups
       arguments:
         load_balancer_names:
-          - "${alb_name}"
+          - "${tf_out__alb_name}"
         security_group_ids:
-          - "${alb_secgroup_id}"
+          - "${tf_out__current_alb_id}"

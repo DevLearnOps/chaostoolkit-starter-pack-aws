@@ -27,21 +27,16 @@ locals {
 }
 
 locals {
-  name   = "chaos-${basename(path.cwd)}"
+  name = "chaos-${basename(path.cwd)}"
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, var.azs)
 
-  tags = {
-    Example    = local.name
-    GithubRepo = "terraform-aws-vpc"
-    GithubOrg  = "terraform-aws-modules"
+  alb_tags = {
+    Name        = local.name
+    Application = "Nginx"
   }
 }
-
-################################################################################
-# VPC Module
-################################################################################
 
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
@@ -54,8 +49,32 @@ module "vpc" {
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 4)]
 
   single_nat_gateway = true
+}
 
-  tags = local.tags
+resource "aws_ssm_parameter" "vpc_id" {
+  name  = "/vpc/id"
+  value = module.vpc.vpc_id
+  type  = "String"
+}
+resource "aws_ssm_parameter" "public_subnets" {
+  name  = "/vpc/public_subnets"
+  value = join(",", module.vpc.public_subnets)
+  type  = "String"
+}
+resource "aws_ssm_parameter" "private_subnets" {
+  name  = "/vpc/private_subnets"
+  value = join(",", module.vpc.private_subnets)
+  type  = "String"
+}
+resource "aws_ssm_parameter" "private_subnets_cidr_blocks" {
+  name  = "/vpc/cidr-blocks/private_subnets"
+  value = join(",", module.vpc.private_subnets_cidr_blocks)
+  type  = "String"
+}
+resource "aws_ssm_parameter" "public_subnets_cidr_blocks" {
+  name  = "/vpc/cidr-blocks/public_subnets"
+  value = join(",", module.vpc.public_subnets_cidr_blocks)
+  type  = "String"
 }
 
 resource "aws_security_group" "vpc_endpoint_secgroup" {
@@ -64,40 +83,40 @@ resource "aws_security_group" "vpc_endpoint_secgroup" {
   vpc_id      = module.vpc.vpc_id
 
   ingress {
-    description      = "TLS from VPC"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    cidr_blocks      = [module.vpc.vpc_cidr_block]
+    description = "TLS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr_block]
   }
 }
 
 module "vpc_endpoints" {
   source = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
 
-  vpc_id = module.vpc.vpc_id
+  vpc_id             = module.vpc.vpc_id
   security_group_ids = [aws_security_group.vpc_endpoint_secgroup.id]
-  subnet_ids = module.vpc.private_subnets
+  subnet_ids         = module.vpc.private_subnets
 
   endpoints = {
     s3 = {
-      service = "s3"
-      service_type = "Gateway"
+      service         = "s3"
+      service_type    = "Gateway"
       route_table_ids = module.vpc.private_route_table_ids
     },
     logs = {
-      service = "logs"
-      service_type = "Interface"
+      service             = "logs"
+      service_type        = "Interface"
       private_dns_enabled = true
     },
     ecr_api = {
-      service = "ecr.api"
-      service_type = "Interface"
+      service             = "ecr.api"
+      service_type        = "Interface"
       private_dns_enabled = true
     },
     ecr_dkr = {
-      service = "ecr.dkr"
-      service_type = "Interface"
+      service             = "ecr.dkr"
+      service_type        = "Interface"
       private_dns_enabled = true
     },
   }
@@ -110,23 +129,23 @@ module "ecs" {
 
   services = {
     nginx = {
-      cpu = local.cpu
-      memory = local.memory
+      cpu           = local.cpu
+      memory        = local.memory
       desired_count = 1
-      launch_type = "FARGATE"
-      subnet_ids = module.vpc.private_subnets
+      launch_type   = "FARGATE"
+      subnet_ids    = module.vpc.private_subnets
 
       container_definitions = {
         nginx = {
-          cpu = local.cpu
-          memory = local.memory
+          cpu       = local.cpu
+          memory    = local.memory
           essential = true
-          image = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/security/nginx"
+          image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/security/nginx"
           port_mappings = [
             {
               containerPort = local.container_port
-              hostPort = local.container_port
-              protocol = "tcp"
+              hostPort      = local.container_port
+              protocol      = "tcp"
             },
           ]
           readonly_root_filesystem = false
@@ -136,34 +155,34 @@ module "ecs" {
       load_balancer = {
         service = {
           target_group_arn = element(module.alb.target_group_arns, 0)
-          container_name = "nginx"
-          container_port = local.container_port
+          container_name   = "nginx"
+          container_port   = local.container_port
         }
       }
 
       security_group_rules = {
         alb_ingress_80 = {
-          type = "ingress"
-          description = "Allow from LB to service port"
-          from_port = local.container_port
-          to_port = local.container_port
-          protocol = "tcp"
+          type                     = "ingress"
+          description              = "Allow from LB to service port"
+          from_port                = local.container_port
+          to_port                  = local.container_port
+          protocol                 = "tcp"
           source_security_group_id = module.alb_sg.security_group_id
         }
         egress_vpc_cidr = {
-          type = "egress"
+          type        = "egress"
           description = "Allow outbound to VPC"
-          from_port = 0
-          to_port = 0
-          protocol = "-1"
+          from_port   = 0
+          to_port     = 0
+          protocol    = "-1"
           cidr_blocks = [module.vpc.vpc_cidr_block]
         }
         egress_s3_prefix_list = {
-          type = "egress"
-          description = "Allow outbound to S3 service endpoint"
-          from_port = 443
-          to_port = 443
-          protocol = "tcp"
+          type            = "egress"
+          description     = "Allow outbound to S3 service endpoint"
+          from_port       = 443
+          to_port         = 443
+          protocol        = "tcp"
           prefix_list_ids = [module.vpc_endpoints.endpoints.s3.prefix_list_id]
         }
       }
@@ -173,7 +192,7 @@ module "ecs" {
 
 
 module "alb_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
+  source = "terraform-aws-modules/security-group/aws"
 
   name        = "${local.name}-service"
   description = "Service security group"
@@ -185,11 +204,11 @@ module "alb_sg" {
   egress_rules       = ["all-all"]
   egress_cidr_blocks = module.vpc.private_subnets_cidr_blocks
 
-  tags = local.tags
+  tags = merge(local.alb_tags, { Role = "alb-main" })
 }
 
 module "alb" {
-  source  = "terraform-aws-modules/alb/aws"
+  source = "terraform-aws-modules/alb/aws"
 
   name = local.name
 
@@ -216,5 +235,9 @@ module "alb" {
     },
   ]
 
-  tags = local.tags
+  tags = local.alb_tags
+}
+
+output "app_dns_name" {
+  value = module.alb.lb_dns_name
 }
