@@ -49,6 +49,7 @@ module "vpc" {
   public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 4)]
 
   single_nat_gateway = true
+  enable_nat_gateway = true
 }
 
 resource "aws_ssm_parameter" "vpc_id" {
