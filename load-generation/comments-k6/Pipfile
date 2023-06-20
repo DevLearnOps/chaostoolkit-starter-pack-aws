@@ -5,13 +5,9 @@ name = "pypi"
 
 [packages]
 chaostoolkit = "*"
-chaostoolkit-aws = "*"
-chaostoolkit-addons = "*"
 chaostoolkit-k6 = "*"
-chaostoolkit-terraform = "*"
-jsonpath2 = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3"

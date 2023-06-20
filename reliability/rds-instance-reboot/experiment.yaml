@@ -1,0 +1,41 @@
+title: "Application should be working after a we shutdown and start the db cluster"
+description: |
+  If I restart a db cluster (shutdown + start) the application should still be working after the restart is completed
+
+configuration:
+  db_instance_identifier: "live-comments-full-cluster"
+  application_url: http://localhost:3000
+  acceptable_downtime: 120
+
+steady-state-hypothesis:
+  title: "service-is-stable"
+  probes:
+    - name: "service-responsive"
+      type: probe
+      tolerance: 200
+      provider:
+        type: http
+        url: "${application_url}/users"
+        method: GET
+        timeout: 2
+    - name: "instance-status"
+      type: probe
+      tolerance: available
+      provider:
+        type: python
+        module: chaosaws.rds.probes
+        func: instance_status
+        arguments:
+          instance_id: ${db_instance_identifier}
+
+method:
+  - name: "reboot-db-instance"
+    type: action
+    provider:
+      type: python
+      module: chaosaws.rds.actions
+      func: reboot_db_instance
+      arguments:
+        db_instance_identifier: ${db_instance_identifier}
+    pauses:
+      after: ${acceptable_downtime}

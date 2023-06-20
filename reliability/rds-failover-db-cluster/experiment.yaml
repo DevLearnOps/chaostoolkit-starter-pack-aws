@@ -1,0 +1,42 @@
+title: "Application should be working after a failover of the db cluster"
+description: |
+  If I trigger the failover of the db cluster the application should keep working 
+  (DOES NOT WORK ATM BECAUSE WE DON'T HAVE A DB CLUSTER)
+
+configuration:
+  db_cluster_identifier: "live-comments-full-cluster"
+  application_url: http://localhost:3000
+  acceptable_downtime: 120
+
+steady-state-hypothesis:
+  title: "service-is-stable"
+  probes:
+    - name: "service-responsive"
+      type: probe
+      tolerance: 200
+      provider:
+        type: http
+        url: "${application_url}/users"
+        method: GET
+        timeout: 2
+    - name: "instance-status"
+      type: probe
+      tolerance: available
+      provider:
+        type: python
+        module: chaosaws.rds.probes
+        func: instance_status
+        arguments:
+          instance_id: ${db_instance_identifier}
+
+method:
+  - name: "failover-db-cluster"
+    type: action
+    provider:
+      type: python
+      module: chaosaws.rds.actions
+      func: failover_db_cluster
+      arguments:
+        db_cluster_identifier: ${db_cluster_identifier}
+    pauses:
+      after: ${acceptable_downtime}

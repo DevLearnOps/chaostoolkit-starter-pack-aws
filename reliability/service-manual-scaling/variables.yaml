@@ -1,0 +1,5 @@
+configuration:
+  cluster_name: "live-comments-full-cluster"
+  service_name: "web-service"
+  application_url: http://live-comments-full-public-1642238899.us-east-1.elb.amazonaws.com
+  acceptable_downtime: 120
