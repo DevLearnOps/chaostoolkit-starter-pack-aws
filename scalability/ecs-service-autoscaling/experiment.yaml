@@ -14,7 +14,7 @@ contributions:
 configuration:
   stress_duration: "10m"
   stress_users: "10"
-  script_file: "../../load-generation/comments-k6/script.js"
+  script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
   application_url:
@@ -40,6 +40,8 @@ steady-state-hypothesis:
           endpoint: ${application_url}/users
           method: GET
           timeout: 5
+          duration: 10s
+          vus: 2
     - name: "desired-equals-running"
       type: probe
       tolerance: true
