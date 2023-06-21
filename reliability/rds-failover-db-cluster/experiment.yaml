@@ -1,12 +1,25 @@
 title: "Application should be working after a failover of the db cluster"
 description: |
-  If I trigger the failover of the db cluster the application should keep working 
+  This experiment validates that the failover to another instance works correctly
+  and the service is restored in a reasonable time  
   (DOES NOT WORK ATM BECAUSE WE DON'T HAVE A DB CLUSTER)
+
+contributions:
+  security: "low"
+  reliability: "high"
+  scalability: "low"
 
 configuration:
   db_cluster_identifier: "live-comments-full-cluster"
-  application_url: http://localhost:3000
   acceptable_downtime: 120
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/app/comments/live/web_url"
 
 steady-state-hypothesis:
   title: "service-is-stable"

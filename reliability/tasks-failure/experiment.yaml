@@ -3,11 +3,23 @@ description: |
   A chaos experiment to verify that a service can successfully recover
   from container failure within a certain time frame.
 
+contributions:
+  security: "low"
+  reliability: "high"
+  scalability: "medium"
+
 configuration:
   cluster_name: "live-comments-full-cluster"
   service_name: "web-service"
-  application_url: http://localhost:3000
   acceptable_downtime: 120
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/app/comments/live/web_url"
 
 steady-state-hypothesis:
   title: "service-is-stable"
