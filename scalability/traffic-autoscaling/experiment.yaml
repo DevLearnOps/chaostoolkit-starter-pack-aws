@@ -1,12 +1,20 @@
-title: When the traffic increases, the containers should scale out
+title: When the traffic increases, the targeted service should scale out
 description: |-
-  This is an experiment where we test the autoscaling policy based on the rps.
-  We are going to generate load using k6
+  This experiment validates that the service auto-scaling policies can correctly
+  scale out and increase the number of containers.
+  We use Grafana k6 to generate user traffic and drive load to the infrastructure.
+  After the load generation script completes, we hypothesise the targeted service
+  should have scaled out to reach its maximum allowed container count.
+
+contributions:
+  security: "low"
+  reliability: "medium"
+  scalability: "high"
 
 configuration:
   stress_duration: "10m"
   stress_users: "10"
-  script_file: "../../../load_testing/script.js"
+  script_file: "../../load-generation/comments-k6/script.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
   application_url:
@@ -23,12 +31,15 @@ steady-state-hypothesis:
   probes:
     - type: probe
       name: "site-responsive"
-      tolerance: 200
+      tolerance: true
       provider:
-        type: http
-        url: "${application_url}/users"
-        method: "GET"
-        timeout: 5
+        func: http
+        module: chaosgrafana.k6.probes
+        type: python
+        arguments:
+          endpoint: ${application_url}/users
+          method: GET
+          timeout: 5
     - name: "desired-equals-running"
       type: probe
       tolerance: true
@@ -55,22 +66,14 @@ steady-state-hypothesis:
 
 method:
   - type: action
-    name: "set-env"
-    provider:
-      type: python
-      module: devlearnops.os.actions
-      func: set_env
-      arguments:
-        environ:
-          COMMENTS_URL: "${application_url}"
-
-  - type: action
     name: "apply-test-load"
     provider:
       func: run_script
-      module: chaosk6.actions
+      module: chaosgrafana.k6.actions
       type: python
       arguments:
         script_path: ${script_file}
         vus: ${stress_users}
         duration: ${stress_duration}
+        environ:
+          COMMENTS_URL: "${application_url}"

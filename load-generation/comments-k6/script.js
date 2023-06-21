@@ -4,10 +4,10 @@ import { sleep } from 'k6';
 
 
 export function setup() {
-    // 2. setup code
-  }
+// 2. setup code
+}
   
-  export default function (data) {
+export default function (data) {
     // 3. VU code
     const host = __ENV.COMMENTS_URL ? __ENV.COMMENTS_URL : 'http://localhost:3000';
 

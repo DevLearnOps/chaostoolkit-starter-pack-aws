@@ -7,7 +7,7 @@ name = "pypi"
 chaostoolkit = "*"
 chaostoolkit-aws = "*"
 chaostoolkit-addons = "*"
-chaostoolkit-k6 = "*"
+chaostoolkit-grafana = "*"
 chaostoolkit-terraform = "*"
 jsonpath2 = "*"
 

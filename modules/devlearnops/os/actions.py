@@ -13,6 +13,6 @@ def set_env(
     configuration: Configuration = None,
     secrets: Secrets = None,
 ) -> bool:
-    for key, value in environ:
+    for key, value in environ.items():
         os.environ[key] = value
     return True
