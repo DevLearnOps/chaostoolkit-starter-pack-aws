@@ -1,0 +1,46 @@
+title: "Service should meet desired count in reasonable time"
+description: |
+  if update desired count, all should be running within 2 minutes
+
+configuration:
+  cluster_name: "live-comments-full-cluster"
+  service_name: "web-service"
+  application_url: http://localhost:3000
+  acceptable_downtime: 120
+
+steady-state-hypothesis:
+  title: "service-is-stable"
+  probes:
+    - name: "service-responsive"
+      type: probe
+      tolerance: 200
+      provider:
+        type: http
+        url: "${application_url}/users"
+        method: GET
+        timeout: 2
+    - name: "desired-equals-running"
+      type: probe
+      tolerance: true
+      provider:
+        type: python
+        module: chaosaws.ecs.probes
+        func: are_all_desired_tasks_running
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+
+method:
+  - name: "update-desired-count"
+    type: action
+    provider:
+      type: python
+      module: chaosaws.ecs.actions
+      func: update_desired_count
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+        desired_count: 2
+    pauses:
+      after: ${acceptable_downtime}
+

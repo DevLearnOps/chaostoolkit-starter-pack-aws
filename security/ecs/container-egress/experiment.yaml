@@ -13,14 +13,13 @@ contributions:
 
 configuration:
   forbidden_endpoint: "https://www.google.com"
-  tf__target_service_secgroup: sg-0ad97dde3d3ef64e2
   tf_conf__retain: true
 
 controls:
   - name: terraform
     provider:
       type: python
-      module: chaostf.control
+      module: chaosterraform.control
 
 method:
   - type: action

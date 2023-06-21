@@ -1,0 +1,3 @@
+If traffic generated with k6 increases to 100 rps, then service containers should scale out.
+
+- for another experiment: if traffic decreases, then services should scale in within a time limit

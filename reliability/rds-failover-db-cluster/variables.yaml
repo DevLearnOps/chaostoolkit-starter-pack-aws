@@ -1,0 +1,4 @@
+configuration:
+  db_cluster_identifier: "chaos-infrastructure-default"
+  application_url: http://live-comments-full-public-1111416821.us-east-1.elb.amazonaws.com
+  acceptable_downtime: 120

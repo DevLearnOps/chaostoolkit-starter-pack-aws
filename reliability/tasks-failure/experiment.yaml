@@ -1,0 +1,48 @@
+title: "Service should recover from container failure"
+description: |
+  A chaos experiment to verify that a service can successfully recover
+  from container failure within a certain time frame.
+
+configuration:
+  cluster_name: "live-comments-full-cluster"
+  service_name: "web-service"
+  application_url: http://localhost:3000
+  acceptable_downtime: 120
+
+steady-state-hypothesis:
+  title: "service-is-stable"
+  probes:
+    - name: "service-responsive"
+      type: probe
+      tolerance: 200
+      provider:
+        type: http
+        url: "${application_url}/users"
+        method: GET
+        timeout: 2
+    - name: "desired-equals-running"
+      type: probe
+      tolerance: true
+      provider:
+        type: python
+        module: chaosaws.ecs.probes
+        func: are_all_desired_tasks_running
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+
+method:
+  - name: "fail-half-containers"
+    type: action
+    provider:
+      type: python
+      module: chaosaws.ecs.actions
+      func: stop_random_tasks
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+        task_percent: 50
+        reason: "Chaos testing"
+    pauses:
+      after: ${acceptable_downtime}
+
