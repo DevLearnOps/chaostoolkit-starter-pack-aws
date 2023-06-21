@@ -10,7 +10,7 @@ configuration:
     default: "http://localhost:3000"
   stress_duration: "10s"
   stress_users: "2"
-  script_file: "script.js"
+  script_file: "journey_crud.js"
 
 steady-state-hypothesis:
   title: "Verify web server is available"

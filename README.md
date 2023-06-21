@@ -5,10 +5,12 @@ A starter pack full of ChaosToolkit experiments for AWS infrastructure
 
 failover is more realistic when done with reboot_db_instance with `force_failover=True`
 
-### Service scalability ideas
-- [ ] Load Testing: Simulate a sudden spike in traffic or a surge in the number of requests to your service. This can help determine if your autoscaling mechanism responds appropriately and scales up the resources to handle the increased load effectively.
+### Service resiliency ideas
 
 - [ ] Resource Failure: Introduce failures in the underlying infrastructure, such as terminating instances, disabling load balancers, or throttling network bandwidth. Observe how your autoscaling system detects and responds to these failures, and ensure it scales resources accordingly to maintain service availability.
+
+### Service scalability ideas
+- [x] Load Testing: Simulate a sudden spike in traffic or a surge in the number of requests to your service. This can help determine if your autoscaling mechanism responds appropriately and scales up the resources to handle the increased load effectively.
 
 - [ ] Scaling Delays: Introduce delays or slowdowns in the scaling process. This could involve delaying the provisioning of new instances or deliberately slowing down the termination of idle instances. Observe the impact on the responsiveness of your service and evaluate if the scaling mechanism is resilient enough to handle such delays.
 
@@ -36,7 +38,6 @@ failover is more realistic when done with reboot_db_instance with `force_failove
 - [ ] Autoscaling Speed: Test the responsiveness and speed of your autoscaling system by rapidly increasing the load and monitoring how quickly it scales up resources to handle the increased demand. Measure the time it takes for the system to detect the need for scaling, provision new resources, and make them available for handling requests.
     What's interesting about this would be using probes in the method execution to measure how long it takes to detect the increased traffic. A custom probe could do that and report it back in the journal. Then we need a way to use those information.
 
-
 - [ ] Seasonal Traffic: Simulate different seasonal patterns in your workload, such as holiday spikes or weekday/weekend variations. This experiment helps ensure your autoscaling system can handle and adapt to fluctuating demand patterns over extended periods.
     Could be interesting to simulate the effects of a promotion or a very hot page that generates a lot of GET traffic
 
@@ -58,6 +59,9 @@ failover is more realistic when done with reboot_db_instance with `force_failove
 - [ ] Autoscaling Constraints: Test the behavior of your autoscaling system when it reaches certain limits or constraints, such as maximum instance capacity or maximum scaling rate. Evaluate if the system handles these constraints gracefully and maintains stability.
     In this case should we verify the system can notify us that the service has scaled to its maximum capacity? Should we test for the notification in SNS?
 
-
 - [ ] Instance Hibernation: Experiment with hibernation or suspension of idle instances to conserve resources during low-demand periods. Assess how your autoscaling system identifies and hibernates idle instances and promptly resumes them when demand increases.
     Does this apply to services that run on EC2? Should we maybe have the option to deploy services with Ec2 clusters rather than FARGATE?
+
+## Simulating AZ Failure
+
+Refer to this [aws lab](https://catalog.us-east-1.prod.workshops.aws/workshops/5fc0039f-9f15-47f8-aff0-09dc7b1779ee/en-US/030-basic-content/090-scenarios/010-simulating-az-issues/020-impact-ec2-asg) to implemnet AZ failure for ECS services
