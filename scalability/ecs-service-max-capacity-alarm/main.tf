@@ -41,7 +41,7 @@ locals {
 module "sqs_queue" {
   source = "terraform-aws-modules/sqs/aws"
 
-  name = "pub-sub"
+  name = "urgent-updates-queue"
 
   create_queue_policy = true
   queue_policy_statements = {
