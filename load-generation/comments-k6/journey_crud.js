@@ -1,14 +1,7 @@
-// 1. init code
 import http from 'k6/http';
 import { sleep } from 'k6';
 
-
-export function setup() {
-// 2. setup code
-}
-  
 export default function (data) {
-    // 3. VU code
     const host = __ENV.COMMENTS_URL ? __ENV.COMMENTS_URL : 'http://localhost:3000';
 
     const params = {
@@ -22,17 +15,18 @@ export default function (data) {
     http.get(`${host}/users`);
 
     let payload_user = JSON.stringify({
-        handle: 'test_user',
+        handle: '@test_user',
         username: 'Test user',
     });
 
     let response = http.post(`${host}/users/`, payload_user, params);
 
-    const user_id = response.body.id;
+    const user_id = JSON.parse(response.body).id;
 
     http.get(`${host}/users/${user_id}`);
 
     payload_user = JSON.stringify({
+        handle: '@newuser',
         username: 'New username',
     });
     
@@ -51,15 +45,13 @@ export default function (data) {
 
     response = http.post(`${host}/posts/`, payload_post, params);
 
-    const post_id = response.body.id;
+    const post_id = JSON.parse(response.body).id;
 
     http.get(`${host}/posts/${post_id}`);
 
-    payload_post = JSON.stringify({
-        title: 'New title',
-    });
+    let updateData = {id: post_id, url: 'https://www.test.com/permalink', title: 'Updated post title'};
     
-    http.put(`${host}/posts/${post_id}`, payload_post, params);
+    http.put(`${host}/posts/${post_id}`, JSON.stringify(updateData), params);
 
     http.get(`${host}/posts/${post_id}`);
 
@@ -69,23 +61,23 @@ export default function (data) {
 
     let payload_spam_comment = JSON.stringify({
         content: "Contact me now to get a free loan!",
-        user: 1,
+        user: user_id,
         replyTo: null,
-        post: 1
+        post: post_id
     });
 
     response = http.post(`${host}/comments/`, payload_spam_comment, params);
 
     let payload_comment = JSON.stringify({
         content: "I really like your article!",
-        user: 1,
+        user: user_id,
         replyTo: null,
-        post: 1
+        post: post_id
     });
 
     response = http.post(`${host}/comments/`, payload_comment, params);
 
-    const comment_id = response.body.id;
+    const comment_id = JSON.parse(response.body).id;
 
     http.get(`${host}/comments/${comment_id}`);
 
@@ -104,8 +96,4 @@ export default function (data) {
     http.del(`${host}/comments/${comment_id}`);
     http.del(`${host}/posts/${post_id}`);
     http.del(`${host}/users/${user_id}`);
-  }
-  
-  export function teardown(data) {
-    // 4. teardown code
   }
