@@ -1,9 +1,16 @@
 # RDS Failover DB Cluster
 
-Description
+This experiment simulates the failover of a DB cluster. This can help determine if your DB is able to recover from a failover.
 
-## Run command
+## System Requirements
+
+**Python Packages**
+
+* chaostoolkit-aws
+
+## Running the experiment
 
 ```bash
-PYTHONPATH=../../modules/ chaos run experiment.yaml
+PYTHONPATH=../../modules/ \
+chaos run experiment.yaml
 ```
