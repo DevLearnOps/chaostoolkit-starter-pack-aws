@@ -1,20 +1,21 @@
 title: When ECS service reaches maximum container count, operations should be notified
 description: |-
-  todo
+  Autoscaling Constraints, this experiment verifies the behavior of the autoscaling system
+  when it reaches the upper limit for container count on the specified service.
+  The template uses `chaostoolkit-terraform` to temporarily register an AWS Cloudwatch alarm
+  before the experiment and verifies the alarm notification is triggered and received by the
+  SQS queue within 5 minutes.
 
 contributions:
-  security: "low"
+  security: "none"
   reliability: "medium"
   scalability: "high"
 
 configuration:
-  stress_duration: "10m"
-  stress_users: "10"
-  script_file: "../../load-generation/comments-k6/journey_prod.js"
+  max_desired_count: 3
+  original_desired_count: 1
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
-  tf__cluster_name: "live-comments-full-cluster"
-  tf__service_name: "comments-api-service"
   application_url:
     type: probe
     provider:
@@ -30,8 +31,13 @@ controls:
       type: python
       module: chaosterraform.control
       arguments:
-        silent: false
-        retain: true
+        silent: true
+        retain: false
+        variables:
+          cluster_name:
+            name: cluster_name
+          service_name:
+            name: service_name
 
 steady-state-hypothesis:
   title: "Verify web server is available"
@@ -63,21 +69,9 @@ steady-state-hypothesis:
           queue_url: ${tf_out__queue_url}
           topic_arn: ${tf_out__topic_arn}
           alarm_name: ${tf_out__alarm_name}
-          timeout: 180
+          timeout: 300
           consume_message: true
 method:
-  #- type: action
-    #name: "apply-test-load"
-    #provider:
-      #func: run_script
-      #module: chaosgrafana.k6.actions
-      #type: python
-      #arguments:
-        #script_path: ${script_file}
-        #vus: ${stress_users}
-        #duration: ${stress_duration}
-        #environ:
-          #COMMENTS_URL: "${application_url}"
   - type: action
     name: set-desired-to-max
     provider:
@@ -87,4 +81,16 @@ method:
       arguments:
         cluster: ${cluster_name}
         service: ${service_name}
-        desired_count: 3
+        desired_count: ${max_desired_count}
+
+rollbacks:
+  - type: action
+    name: reset-desired-count
+    provider:
+      type: python
+      module: chaosaws.ecs.actions
+      func: update_desired_count
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+        desired_count: ${original_desired_count}

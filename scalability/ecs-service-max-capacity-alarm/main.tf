@@ -17,6 +17,9 @@ provider "aws" {
   }
 }
 
+####################################
+#           Variables              #
+####################################
 variable "service_name" {
   type    = string
   default = "comments-api-service"
@@ -32,10 +35,17 @@ variable "statistic" {
   default = "Maximum"
 }
 
+variable "max_container_count" {
+  type    = number
+  default = 3
+}
+
+####################################
+#           Resources              #
+####################################
 locals {
-  max_container_count = 3
-  evaluation_periods  = 1
-  period_seconds      = 60
+  evaluation_periods = 1
+  period_seconds     = 60
 }
 
 module "sqs_queue" {
@@ -84,7 +94,7 @@ module "metric_alarm" {
   alarm_description   = "Service ${var.service_name} reached max container capacity"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = local.evaluation_periods
-  threshold           = local.max_container_count
+  threshold           = var.max_container_count
   period              = local.period_seconds
   unit                = "Count"
 
@@ -100,6 +110,9 @@ module "metric_alarm" {
   alarm_actions = [aws_sns_topic.urgent_updates.arn]
 }
 
+####################################
+#            Outputs               #
+####################################
 output "queue_url" {
   value = module.sqs_queue.queue_url
 }
