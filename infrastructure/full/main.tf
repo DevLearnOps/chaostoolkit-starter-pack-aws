@@ -268,6 +268,16 @@ module "comments_api_service" {
     },
     local.container_egress_rules,
   )
+
+  tasks_iam_role_statements = {
+    exec_command = {
+      actions = [
+        "s3:*",
+      ]
+      effect = "Allow"
+      resources = ["*"]
+    }
+  }
 }
 
 module "spam_check_service" {
