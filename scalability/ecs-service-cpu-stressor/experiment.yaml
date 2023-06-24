@@ -35,6 +35,19 @@ steady-state-hypothesis:
           timeout: 5
           duration: 10s
           vus: 2
+    - type: probe
+      name: "should-have-no-successful-requests"
+      tolerance:
+        type: range
+        range: [90, 100]
+      provider:
+        type: python
+        module: devlearnops.aws.ecs.probes
+        func: get_cloudwatch_transactions_per_second
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+          duration: 300
 
 method:
   - type: action
@@ -45,8 +58,9 @@ method:
       type: python
       arguments:
         script_path: ${script_file}
-        vus: 1
-        duration: "3m"
+        stages:
+          - duration: "3m"
+            target: 5
         environ:
           COMMENTS_URL: "${application_url}"
 
@@ -62,8 +76,7 @@ method:
         stressor:
           type: cpu
           cpu_load: 50
-          duration: "20m"
-        stressor_delay_seconds: 120
+        stressor_delay_seconds: 60
 
   - type: action
     name: "apply-constant-load"
@@ -74,7 +87,7 @@ method:
       arguments:
         script_path: ${script_file}
         vus: 1
-        duration: "20m"
+        duration: "15m"
         environ:
           COMMENTS_URL: "${application_url}"
 
