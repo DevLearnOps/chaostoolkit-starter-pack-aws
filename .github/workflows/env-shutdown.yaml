@@ -1,0 +1,19 @@
+on:
+  push:
+    branches: ['*']
+  schedule:
+    - cron: '0 21 * * *'
+
+jobs:
+  destroy-app-stack:
+    name: Destroy Application Stack on Live Environment
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - run: |
+          terraform --version
+          terragrunt --version
+
