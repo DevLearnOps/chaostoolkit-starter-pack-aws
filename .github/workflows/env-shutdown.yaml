@@ -1,9 +1,9 @@
 name: Scheduled Actions
-on:
-  push:
-    branches: ['*']
-  schedule:
-    - cron: '0 21 * * *'
+on: [push]
+  #push:
+    #branches: ['*']
+  #schedule:
+    #- cron: '0 21 * * *'
 
 jobs:
   destroy-app-stack:
