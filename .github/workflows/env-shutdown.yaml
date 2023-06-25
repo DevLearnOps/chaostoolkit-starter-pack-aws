@@ -16,5 +16,6 @@ jobs:
 
       - run: |
           terraform --version
+          brew install terragrunt
           terragrunt --version
 
