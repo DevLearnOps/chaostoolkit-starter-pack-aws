@@ -20,24 +20,21 @@ provider "aws" {
 ####################################
 #           Variables              #
 ####################################
-variable "service_name" {
-  type    = string
-  default = "comments-api-service"
-}
-
 variable "cluster_name" {
   type    = string
-  default = "live-comments-full-cluster"
+}
+
+variable "service_name" {
+  type    = string
+}
+
+variable "max_container_count" {
+  type    = number
 }
 
 variable "statistic" {
   type    = string
   default = "Maximum"
-}
-
-variable "max_container_count" {
-  type    = number
-  default = 3
 }
 
 ####################################

@@ -1,14 +1,14 @@
-title: When ECS service reaches maximum container count, operations should be notified
+title: ECS service scaling policies should scale in resources for cost optimisation
 description: |-
-  Autoscaling Constraints, this experiment verifies the behavior of the autoscaling system
-  when it reaches the upper limit for container count on the specified service.
-  The template uses `chaostoolkit-terraform` to temporarily register an AWS Cloudwatch alarm
-  before the experiment and verifies the alarm notification is triggered and received by the
-  SQS queue within 5 minutes.
+  Autoscaling tuning, this experiment verifies the configured autoscaling policies for the
+  target service can scale-in tasks within a certain time frame in order to optimise resource
+  utilisation. We start by updating the desired container count for the service to its maximum
+  allowed, then wait for the policies to downscale back to the original value within a certain
+  time.
 
 contributions:
   security: "none"
-  reliability: "medium"
+  reliability: "none"
   scalability: "high"
 
 configuration:
@@ -52,7 +52,7 @@ steady-state-hypothesis:
           cluster: ${cluster_name}
           service: ${service_name}
           attribute: "desiredCount"
-          expected: 1
+          expected: ${original_desired_count}
           timeout: 900 # 15 minutes
 
 method:

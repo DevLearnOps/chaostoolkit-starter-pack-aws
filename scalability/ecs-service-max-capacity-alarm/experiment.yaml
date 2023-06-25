@@ -38,6 +38,8 @@ controls:
             name: cluster_name
           service_name:
             name: service_name
+          max_container_count:
+            name: max_desired_count
 
 steady-state-hypothesis:
   title: "Verify web server is available"
