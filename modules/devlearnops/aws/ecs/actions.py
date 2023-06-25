@@ -8,8 +8,11 @@ from .. import get_current_region, get_account_id
 
 __all__ = ["install_container_stressor", "remove_container_stressor"]
 
+HOG_CONTAINER_NAME = "ecs-hog"
 
-def _filter_tasks(tasks, count, percent):
+
+def _select_tasks(tasks, count, percent):
+    """Select tasks from a list based on count or percentage"""
     if len(tasks) <= 1:
         return tasks
 
@@ -21,7 +24,8 @@ def _filter_tasks(tasks, count, percent):
     return tasks[: count - 1]
 
 
-def _get_current_task_definition(ecs_client, cluster: str, service: str):
+def _get_updatable_task_definition(ecs_client, cluster: str, service: str):
+    """Returns the task definition from an ECS service stipping non-updatable attributes"""
     results = ecs_client.describe_services(cluster=cluster, services=[service])
     task_definition = results.get("services")[0].get("taskDefinition")
 
@@ -43,6 +47,7 @@ def _get_current_task_definition(ecs_client, cluster: str, service: str):
 
 
 def _render_stress_command(stressor, task_total_cpu, task_total_memory):
+    """Renders the stressor command for the 'hog' container"""
     stressor_type = stressor["type"]
     cmd = []
     if stressor_type.lower() == "cpu":
@@ -70,12 +75,12 @@ def install_container_stressor(
 ) -> str:
     client = aws_client("ecs", configuration, secrets)
 
-    task_definition = _get_current_task_definition(client, cluster, service)
+    task_definition = _get_updatable_task_definition(client, cluster, service)
 
     container_definitions = task_definition["containerDefinitions"]
     new_container_definitions = []
     for definition in container_definitions:
-        if definition["name"] != "ecs-hog":
+        if definition["name"] != HOG_CONTAINER_NAME:
             new_container_definitions.append(definition)
 
     command = _render_stress_command(
@@ -83,7 +88,7 @@ def install_container_stressor(
     )
 
     hog_container_definition = {
-        "name": "ecs-hog",
+        "name": HOG_CONTAINER_NAME,
         "image": f"{get_account_id()}.dkr.ecr.{get_current_region()}.amazonaws.com/ecs-hog:latest",
         "portMappings": [],
         "essential": False,
@@ -116,12 +121,12 @@ def remove_container_stressor(
 ) -> str:
     client = aws_client("ecs", configuration, secrets)
 
-    task_definition = _get_current_task_definition(client, cluster, service)
+    task_definition = _get_updatable_task_definition(client, cluster, service)
 
     container_definitions = task_definition["containerDefinitions"]
     new_container_definitions = []
     for definition in container_definitions:
-        if definition["name"] != "ecs-hog":
+        if definition["name"] != HOG_CONTAINER_NAME:
             new_container_definitions.append(definition)
 
     task_definition["containerDefinitions"] = new_container_definitions

@@ -10,7 +10,7 @@ from logzero import logger
 __all__ = ["wait_for_service_attribute"]
 
 
-def _get_service_alb_suffix(cluster, service, ecs_client, elbv2_client) -> str:
+def _get_alb_suffix_for_service(cluster, service, ecs_client, elbv2_client) -> str:
     response = ecs_client.describe_services(cluster=cluster, services=[service])
     if len(response.get("services", [])) != 1:
         raise FailedActivity(
@@ -27,7 +27,7 @@ def _get_service_alb_suffix(cluster, service, ecs_client, elbv2_client) -> str:
     return load_balancer_arn.split("/", maxsplit=1)[1]
 
 
-def _get_metric(metric_name, alb_suffix, duration):
+def _get_elb_metric_from_cloudwatch(metric_name, alb_suffix, duration):
     namespace = "AWS/ApplicationELB"
     return get_metric_statistics(
         namespace=namespace,
@@ -69,7 +69,7 @@ def wait_for_service_attribute(
     raise FailedActivity("Operation timed out.")
 
 
-def get_cloudwatch_transactions_per_second(
+def alb_successful_requests_rate_for_service(
     cluster: str,
     service: str,
     duration: int = 60,
@@ -78,16 +78,22 @@ def get_cloudwatch_transactions_per_second(
 ) -> int:
     ecs_client = aws_client("ecs", configuration, secrets)
     elbv2_client = aws_client("elbv2", configuration, secrets)
-    alb_suffix = _get_service_alb_suffix(
+    alb_suffix = _get_alb_suffix_for_service(
         cluster,
         service,
         ecs_client,
         elbv2_client,
     )
 
-    http_200_count = _get_metric("HTTPCode_Target_2XX_Count", alb_suffix, duration)
-    http_400_count = _get_metric("HTTPCode_Target_4XX_Count", alb_suffix, duration)
-    total_requests_count = _get_metric("RequestCount", alb_suffix, duration)
+    http_200_count = _get_elb_metric_from_cloudwatch(
+        "HTTPCode_Target_2XX_Count", alb_suffix, duration
+    )
+    http_400_count = _get_elb_metric_from_cloudwatch(
+        "HTTPCode_Target_4XX_Count", alb_suffix, duration
+    )
+    total_requests_count = _get_elb_metric_from_cloudwatch(
+        "RequestCount", alb_suffix, duration
+    )
 
     logger.info(
         f"CloudWatch: Metric Value for HTTPCode_Target_2XX_Count={http_200_count}"
@@ -104,10 +110,3 @@ def get_cloudwatch_transactions_per_second(
         return avg_success_rate
 
     return 0
-
-
-get_cloudwatch_transactions_per_second(
-    cluster="live-comments-full-cluster",
-    service="comments-api-service",
-    duration=120,
-)

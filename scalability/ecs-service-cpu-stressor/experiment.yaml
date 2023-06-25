@@ -1,5 +1,5 @@
-title: test
-description: test
+title: TODO
+description: TODO
 
 contributions:
   security: "none"
@@ -36,14 +36,14 @@ steady-state-hypothesis:
           duration: 10s
           vus: 2
     - type: probe
-      name: "should-have-no-successful-requests"
+      name: "successful-requests-rate-above-90-percent"
       tolerance:
         type: range
         range: [90, 100]
       provider:
         type: python
         module: devlearnops.aws.ecs.probes
-        func: get_cloudwatch_transactions_per_second
+        func: alb_successful_requests_rate_for_service
         arguments:
           cluster: ${cluster_name}
           service: ${service_name}
