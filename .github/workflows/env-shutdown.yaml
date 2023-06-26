@@ -1,0 +1,37 @@
+name: Scheduled Actions
+on:
+  schedule:
+    # Actions run in UTC time
+    - cron: '30 18 * * *'
+
+jobs:
+  destroy-app-stack:
+    name: Destroy Application Stack on Live Environment
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: install-terragrunt
+        run: |
+          curl -sSL -o /usr/local/bin/terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.47.0/terragrunt_linux_amd64
+          chmod u+x /usr/local/bin/terragrunt
+
+      - name: show-versions
+        run: |
+          terraform --version
+          terragrunt --version
+
+      - name: Configure AWS credentials from Production account
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: destroy-infrastructure
+        run: |
+          cd infrastructure/
+          terragrunt run-all destroy --terragrunt-non-interactive
+

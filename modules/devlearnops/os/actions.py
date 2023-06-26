@@ -1,5 +1,5 @@
-from typing import Any, Dict
 import os
+from typing import Any, Dict
 
 from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
