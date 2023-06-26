@@ -2,11 +2,23 @@ title: "Service should meet desired count in reasonable time"
 description: |
   if update desired count, all should be running within 2 minutes
 
+contributions:
+  security: "low"
+  reliability: "medium"
+  scalability: "high"
+
 configuration:
   cluster_name: "live-comments-full-cluster"
   service_name: "web-service"
-  application_url: http://localhost:3000
   acceptable_downtime: 120
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/app/comments/live/web_url"
 
 steady-state-hypothesis:
   title: "service-is-stable"

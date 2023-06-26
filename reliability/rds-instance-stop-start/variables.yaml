@@ -1,5 +1,0 @@
-configuration:
-  db_instance_identifier: "chaos-infrastructure-default"
-  application_url: http://live-comments-full-public-1361524986.us-east-1.elb.amazonaws.com
-  acceptable_downtime: 120
-  shutdown_time: 600

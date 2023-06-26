@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-import boto3
-=======
->>>>>>> Stashed changes
 from botocore.exceptions import ClientError
 from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
