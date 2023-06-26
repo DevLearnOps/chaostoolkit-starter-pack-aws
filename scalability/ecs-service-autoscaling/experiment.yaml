@@ -7,7 +7,7 @@ description: |-
   should have scaled out to reach its maximum allowed container count.
 
 contributions:
-  security: "low"
+  security: "none"
   reliability: "medium"
   scalability: "high"
 

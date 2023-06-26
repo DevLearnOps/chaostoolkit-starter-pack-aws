@@ -12,6 +12,8 @@ failover is more realistic when done with reboot_db_instance with `force_failove
 ### Service scalability ideas
 - [x] Load Testing: Simulate a sudden spike in traffic or a surge in the number of requests to your service. This can help determine if your autoscaling mechanism responds appropriately and scales up the resources to handle the increased load effectively.
 
+- [ ] Scale-In Optimization: Gradually reduce the load on your system while monitoring how your autoscaling system scales down resources. Evaluate if the autoscaling algorithm effectively detects decreased demand and gracefully releases unnecessary resources without prematurely scaling down or causing service degradation.
+
 - [ ] Scaling Delays: Introduce delays or slowdowns in the scaling process. This could involve delaying the provisioning of new instances or deliberately slowing down the termination of idle instances. Observe the impact on the responsiveness of your service and evaluate if the scaling mechanism is resilient enough to handle such delays.
 
 - [ ] Metrics Threshold Breach: Manipulate the metrics thresholds used for triggering autoscaling, such as CPU utilization or request queue length. Increase or decrease these thresholds to see how your autoscaling system adjusts resource allocation based on changing conditions. This helps ensure the autoscaling mechanism is properly tuned and responds accurately to different metrics thresholds.
@@ -25,8 +27,6 @@ failover is more realistic when done with reboot_db_instance with `force_failove
 - [ ] Autoscaling Outliers: Introduce abnormal or extreme spikes in traffic that go beyond the expected patterns. This helps validate if your autoscaling mechanism can handle outlier scenarios and scale resources accordingly without impacting the overall system stability.
 
 - [ ] Network Partition: Simulate network partitions or isolated clusters within your infrastructure. This experiment tests how your autoscaling system behaves when instances or services become temporarily unreachable or when communication between components is disrupted. It helps assess the resilience of your autoscaling mechanism under network-related failures.
-
-- [ ] Scale-In Optimization: Gradually reduce the load on your system while monitoring how your autoscaling system scales down resources. Evaluate if the autoscaling algorithm effectively detects decreased demand and gracefully releases unnecessary resources without prematurely scaling down or causing service degradation.
 
 - [ ] Cold Start Testing: Trigger autoscaling when there is little to no existing load on the system. This experiment evaluates the effectiveness of your autoscaling mechanism in efficiently provisioning and scaling up resources to handle sudden increases in traffic, even from a completely idle state.
 

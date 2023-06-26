@@ -116,7 +116,8 @@ module "db_security_group" {
 }
 
 module "db_default" {
-  source = "terraform-aws-modules/rds/aws"
+  source  = "terraform-aws-modules/rds/aws"
+  version = "5.9.0"
 
   identifier = "${local.name}-default"
 
@@ -125,7 +126,7 @@ module "db_default" {
   engine_version       = "8.0"
   family               = "mysql8.0" # DB parameter group
   major_engine_version = "8.0"      # DB option group
-  instance_class       = "db.t4g.large"
+  instance_class       = "db.t4g.micro"
 
   allocated_storage = 20
 

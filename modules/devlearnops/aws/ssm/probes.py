@@ -1,10 +1,9 @@
 from typing import List
 
+from chaosaws import aws_client
 from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
 from logzero import logger
-
-from chaosaws import aws_client
 
 __all__ = ["get_parameter"]
 
