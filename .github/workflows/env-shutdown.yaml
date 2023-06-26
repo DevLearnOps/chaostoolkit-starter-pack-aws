@@ -33,5 +33,7 @@ jobs:
       - name: destroy-infrastructure
         run: |
           cd infrastructure/
+          terragrunt run-all init
+          terragrunt run-all validate
           terragrunt run-all destroy --terragrunt-non-interactive
 
