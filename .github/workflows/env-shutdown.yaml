@@ -1,9 +1,8 @@
 name: Scheduled Actions
-on: [push]
-  #push:
-    #branches: ['*']
-  #schedule:
-    #- cron: '0 21 * * *'
+on:
+  schedule:
+    # Actions run in UTC time
+    - cron: '40 8 * * *'
 
 jobs:
   destroy-app-stack:
