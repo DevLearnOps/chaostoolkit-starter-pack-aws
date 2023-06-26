@@ -1,0 +1,2 @@
+# Terraform backend managed by Terragrunt
+backend.tf
