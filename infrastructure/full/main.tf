@@ -274,7 +274,7 @@ module "comments_api_service" {
       actions = [
         "s3:*",
       ]
-      effect = "Allow"
+      effect    = "Allow"
       resources = ["*"]
     }
   }
