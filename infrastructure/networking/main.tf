@@ -117,7 +117,7 @@ module "db_security_group" {
 
 module "db_default" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "6.0.0"
+  version = "5.9.0"
 
   identifier = "${local.name}-default"
 
@@ -130,10 +130,10 @@ module "db_default" {
 
   allocated_storage = 20
 
-  db_name                     = local.db_schema
-  username                    = local.db_username
-  port                        = local.db_port
-  manage_master_user_password = true
+  db_name                = local.db_schema
+  username               = local.db_username
+  port                   = local.db_port
+  create_random_password = true
 
   multi_az = true
 
