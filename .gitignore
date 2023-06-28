@@ -165,3 +165,5 @@ terraform.tfstate*
 
 #Chaostoolkit
 journal.json
+
+.DS_Store

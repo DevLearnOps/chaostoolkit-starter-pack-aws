@@ -5,6 +5,16 @@ A starter pack full of ChaosToolkit experiments for AWS infrastructure
 
 failover is more realistic when done with reboot_db_instance with `force_failover=True`
 
+### Basket
+- capacity: verify service can reach X successful rps with acceptable latency
+- scaling: service should scale even if only 1 policy is active (test policies individually)
+- fault tolerance: service can survive AZ failure (remove subnets in AZ)
+- fault tolerance: LB can survive AZ failure 
+- fault tolerance: RDS instance can survive AZ failure 
+- fault tolerance: service enviornment misconfiguration
+- fault tolerance: service should fallback if s3 bucket not available??
+- alerting: service logging and metrics configuration - alert when there are no metrics
+
 ### Service resiliency ideas
 
 - [ ] Resource Failure: Introduce failures in the underlying infrastructure, such as terminating instances, disabling load balancers, or throttling network bandwidth. Observe how your autoscaling system detects and responds to these failures, and ensure it scales resources accordingly to maintain service availability.

@@ -10,6 +10,7 @@ chaostoolkit-addons = "*"
 chaostoolkit-grafana = "*"
 chaostoolkit-terraform = "*"
 jsonpath2 = "*"
+chaostoolkit-toxiproxy = "*"
 
 [dev-packages]
 

@@ -1,0 +1,71 @@
+title: ECS services should scale-out on CPU only
+description: |-
+  Autoscaling tuning, this experiment verifies the configured CPU scaling policy for the
+  targeted service can scale-out tasks based on CPU utilization only. This is important
+  to make sure the service can cope with user load even in the event of an unforeseen CPU
+  spike.
+
+contributions:
+  security: "none"
+  reliability: "medium"
+  scalability: "high"
+
+configuration:
+  acceptable_scaling_time: 300
+  expected_container_count: 3
+  cluster_name: "live-comments-full-cluster"
+  service_name: "comments-api-service"
+
+steady-state-hypothesis:
+  title: "Verify autoscaling on CPU"
+  probes:
+    - name: "autoscaling-should-set-max-container-count"
+      type: probe
+      tolerance: true
+      provider:
+        type: python
+        module: devlearnops.aws.ecs.probes
+        func: wait_for_service_attribute
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+          attribute: "desiredCount"
+          expected: ${expected_container_count}
+          timeout: ${acceptable_scaling_time}
+    - name: "desired-equals-running"
+      type: probe
+      tolerance: true
+      provider:
+        type: python
+        module: chaosaws.ecs.probes
+        func: are_all_desired_tasks_running
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+
+method:
+  - type: action
+    name: "stress-cpu"
+    provider:
+      type: python
+      module: chaosawsattacks.ecs.actions
+      func: install_container_stressor
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+        stressor:
+          type: cpu
+          cpu_load: 80
+        stressor_delay_seconds: 60
+        wait_service_stable: true
+
+rollbacks:
+  - type: action
+    name: "revert-service-configuration"
+    provider:
+      type: python
+      module: chaosawsattacks.ecs.actions
+      func: revert_service_configuration
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}

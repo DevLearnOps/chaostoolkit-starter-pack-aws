@@ -7,6 +7,7 @@ contributions:
   scalability: "high"
 
 configuration:
+  stress_users: 10
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
@@ -52,6 +53,7 @@ steady-state-hypothesis:
 method:
   - type: action
     name: "warm-up-service"
+    background: true
     provider:
       func: run_script
       module: chaosgrafana.k6.actions
@@ -59,8 +61,8 @@ method:
       arguments:
         script_path: ${script_file}
         stages:
-          - duration: "3m"
-            target: 5
+          - duration: "5m"
+            target: ${stress_users}
         environ:
           COMMENTS_URL: "${application_url}"
 
@@ -68,7 +70,7 @@ method:
     name: "introduce-cpu-stressor-downstream"
     provider:
       type: python
-      module: devlearnops.aws.ecs.actions
+      module: chaosawsattacks.ecs.actions
       func: install_container_stressor
       arguments:
         cluster: ${cluster_name}
@@ -77,6 +79,8 @@ method:
           type: cpu
           cpu_load: 50
         stressor_delay_seconds: 60
+    pauses:
+      after: 300
 
   - type: action
     name: "apply-constant-load"
@@ -86,7 +90,7 @@ method:
       type: python
       arguments:
         script_path: ${script_file}
-        vus: 1
+        vus: ${stress_users}
         duration: "15m"
         environ:
           COMMENTS_URL: "${application_url}"
@@ -96,7 +100,7 @@ rollbacks:
     name: "remove-cpu-stressor"
     provider:
       type: python
-      module: devlearnops.aws.ecs.actions
+      module: chaosawsattacks.ecs.actions
       func: remove_container_stressor
       arguments:
         cluster: ${cluster_name}
