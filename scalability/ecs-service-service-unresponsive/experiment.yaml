@@ -1,4 +1,4 @@
-title: TODO
+title: Service Unresponsive
 description: TODO
 
 contributions:
@@ -7,7 +7,7 @@ contributions:
   scalability: "high"
 
 configuration:
-  stress_users: 10
+  stress_users: 2
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
@@ -61,7 +61,7 @@ method:
       arguments:
         script_path: ${script_file}
         stages:
-          - duration: "5m"
+          - duration: "3m"
             target: ${stress_users}
         environ:
           COMMENTS_URL: "${application_url}"
@@ -77,10 +77,10 @@ method:
         service: ${service_name}
         stressor:
           type: cpu
-          cpu_load: 50
-        stressor_delay_seconds: 60
+          cpu_load: 100
+        stressor_delay_seconds: 180
     pauses:
-      after: 300
+      after: 180
 
   - type: action
     name: "apply-constant-load"
@@ -91,7 +91,7 @@ method:
       arguments:
         script_path: ${script_file}
         vus: ${stress_users}
-        duration: "15m"
+        duration: "30m"
         environ:
           COMMENTS_URL: "${application_url}"
 

@@ -1,0 +1,115 @@
+title: todo
+description: todo
+
+controls:
+  - name: "setup-proxy-with-terraform"
+    provider:
+      type: python
+      module: chaosterraform.control
+      arguments:
+        chdir: ../../stacks/proxy/
+        silent: false
+        retain: true
+        outputs:
+          toxiproxy_admin_url: "toxiproxy_url"
+
+configuration:
+  stress_users: 10
+  script_file: "../../load-generation/comments-k6/journey_prod.js"
+  cluster_name: "live-comments-full-cluster"
+  service_name: "comments-api-service"
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/app/comments/live/web_url"
+
+method:
+  - type: action
+    name: "wait-for-proxy-active"
+    provider:
+      type: python
+      module: devlearnops.http.probes
+      func: wait_for_service_active
+      arguments:
+        url: "${toxiproxy_url}/version"
+        timeout: 180
+
+  - type: action
+    name: "setup-proxy"
+    provider:
+      type: python
+      module: chaostoxi.proxy.actions
+      func: create_proxy
+      arguments:
+        proxy_name: test
+        upstream_host: "internal-live-comments-full-internal-456064403.us-east-1.elb.amazonaws.com"
+        upstream_port: 80
+        listen_host: 0.0.0.0
+        listen_port: 8080
+        enabled: true
+
+  - type: action
+    name: "route-traffic-to-toxiproxy"
+    provider:
+      type: python
+      module: chaosawsattacks.ecs.actions
+      func: update_service_environment
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+        container_name: "comments_api"
+        environ:
+          BACK_URL: "http://${tf_out__toxiproxy_private_ip}:8080/spam"
+
+  - type: action
+    name: "apply-constant-load"
+    background: true
+    provider:
+      func: run_script
+      module: chaosgrafana.k6.actions
+      type: python
+      arguments:
+        script_path: ${script_file}
+        vus: ${stress_users}
+        duration: "10m"
+        environ:
+          COMMENTS_URL: "${application_url}"
+
+  - type: action
+    name: "toxic"
+    provider:
+      type: python
+      module: chaostoxi.toxic.actions
+      func: create_latency_toxic
+      arguments:
+        for_proxy: test
+        toxic_name: "latency"
+        latency: 2000
+        jitter: 500
+    pauses:
+      before: 60
+      after: 540
+
+rollbacks:
+  - type: action
+    name: "revert-service-config"
+    provider:
+      type: python
+      module: chaosawsattacks.ecs.actions
+      func: revert_service_configuration
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+  - type: action
+    name: "delete-toxics"
+    provider:
+      type: python
+      module: chaostoxi.toxic.actions
+      func: delete_toxic
+      arguments:
+        for_proxy: test
+        toxic_name: "latency"

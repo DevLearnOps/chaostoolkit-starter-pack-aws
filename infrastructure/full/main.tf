@@ -61,7 +61,7 @@ module "alb_sg" {
   ingress_cidr_blocks = ["0.0.0.0/0"]
 
   egress_rules       = ["all-all"]
-  egress_cidr_blocks = split(",", data.aws_ssm_parameter.private_subnets_cidr_blocks.value)
+  egress_cidr_blocks = [data.aws_ssm_parameter.vpc_cidr_block.value]
 
   tags = {
     Role = "alb-main"
@@ -214,7 +214,29 @@ module "comments_api_service" {
           "predefined_metric_type" : "ALBRequestCountPerTarget"
           "resource_label" : "${module.internal_alb.lb_arn_suffix}/${module.internal_alb.target_group_arn_suffixes[0]}"
         },
-        "target_value" : 600
+        "target_value" : 6000
+        "scale_in_cooldown" : 300
+        "scale_out_cooldown" : 180
+      }
+    },
+    "cpu" : {
+      "policy_type" : "TargetTrackingScaling"
+      "target_tracking_scaling_policy_configuration" : {
+        "predefined_metric_specification" : {
+          "predefined_metric_type" : "ECSServiceAverageCPUUtilization"
+        },
+        "target_value" : 70
+        "scale_in_cooldown" : 300
+        "scale_out_cooldown" : 180
+      }
+    },
+    "memory" : {
+      "policy_type" : "TargetTrackingScaling"
+      "target_tracking_scaling_policy_configuration" : {
+        "predefined_metric_specification" : {
+          "predefined_metric_type" : "ECSServiceAverageMemoryUtilization"
+        },
+        "target_value" : 70
         "scale_in_cooldown" : 300
         "scale_out_cooldown" : 180
       }
