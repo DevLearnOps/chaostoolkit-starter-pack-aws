@@ -1,16 +1,23 @@
-title: Service Unresponsive
-description: TODO
+title: Service should scale-out resources in the agreed-upon amount of time
+description: |
+  This experiment validates the service can scale-out containers quickly when
+  additional capacity is required to handle increased load on the application.
+  To simulate production-like conditions we use Grafana k6 to generate synthetic
+  user load and then ask the service to spawn up additional containers.
 
 contributions:
-  security: "none"
+  security: "low"
   reliability: "medium"
   scalability: "high"
 
 configuration:
-  stress_users: 2
+  stress_duration: "5m"
+  stress_users: "20"
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
+  acceptable_scaling_time: 240
+  desired_tasks_count: 3
   application_url:
     type: probe
     provider:
@@ -21,7 +28,7 @@ configuration:
         name: "/app/comments/live/web_url"
 
 steady-state-hypothesis:
-  title: "Verify web server is available"
+  title: "service-is-stable"
   probes:
     - type: probe
       name: "site-responsive"
@@ -36,23 +43,20 @@ steady-state-hypothesis:
           timeout: 5
           duration: 10s
           vus: 2
-    - type: probe
-      name: "successful-requests-rate-above-90-percent"
-      tolerance:
-        type: range
-        range: [90, 100]
+    - name: "desired-equals-running"
+      type: probe
+      tolerance: true
       provider:
         type: python
-        module: devlearnops.aws.ecs.probes
-        func: alb_successful_requests_rate_for_service
+        module: chaosaws.ecs.probes
+        func: are_all_desired_tasks_running
         arguments:
           cluster: ${cluster_name}
           service: ${service_name}
-          duration: 300
 
 method:
   - type: action
-    name: "warm-up-service"
+    name: "apply-test-load"
     background: true
     provider:
       func: run_script
@@ -60,48 +64,20 @@ method:
       type: python
       arguments:
         script_path: ${script_file}
-        stages:
-          - duration: "3m"
-            target: ${stress_users}
-        environ:
-          COMMENTS_URL: "${application_url}"
-
-  - type: action
-    name: "introduce-cpu-stressor-downstream"
-    provider:
-      type: python
-      module: chaosawsattacks.ecs.actions
-      func: install_container_stressor
-      arguments:
-        cluster: ${cluster_name}
-        service: ${service_name}
-        stressor:
-          type: cpu
-          cpu_load: 100
-        stressor_delay_seconds: 180
-    pauses:
-      after: 180
-
-  - type: action
-    name: "apply-constant-load"
-    provider:
-      func: run_script
-      module: chaosgrafana.k6.actions
-      type: python
-      arguments:
-        script_path: ${script_file}
         vus: ${stress_users}
-        duration: "30m"
+        duration: ${stress_duration}
         environ:
           COMMENTS_URL: "${application_url}"
 
-rollbacks:
-  - type: action
-    name: "remove-cpu-stressor"
+  - name: "update-desired-count"
+    type: action
     provider:
       type: python
-      module: chaosawsattacks.ecs.actions
-      func: remove_container_stressor
+      module: chaosaws.ecs.actions
+      func: update_desired_count
       arguments:
         cluster: ${cluster_name}
         service: ${service_name}
+        desired_count: ${desired_tasks_count}
+    pauses:
+      after: ${acceptable_scaling_time}
