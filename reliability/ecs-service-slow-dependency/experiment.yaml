@@ -1,5 +1,15 @@
-title: todo
-description: todo
+title: Service should function normally when a minor dependency is slow to respond
+description: |-
+  This experiment verifies that when a minor dependency of the targeted service is
+  slow to respond it does not have a major impact on users.
+  The template uses `chaostoolkit-terraform` to temporarily create a ToxiProxy server
+  instance on EC2 and routes traffic to the spam-check-service through the proxy to
+  simulate high latency on spam-check.
+
+contributions:
+  security: "none"
+  reliability: "high"
+  scalability: "medium"
 
 controls:
   - name: "setup-proxy-with-terraform"
@@ -8,16 +18,15 @@ controls:
       module: chaosterraform.control
       arguments:
         chdir: ../../stacks/proxy/
-        silent: false
-        retain: true
         outputs:
           toxiproxy_admin_url: "toxiproxy_url"
 
 configuration:
-  stress_users: 10
+  stress_users: 30
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
+  proxy_upstream_host: "internal-live-comments-full-internal-456064403.us-east-1.elb.amazonaws.com"
   application_url:
     type: probe
     provider:
@@ -27,9 +36,35 @@ configuration:
       arguments:
         name: "/app/comments/live/web_url"
 
+steady-state-hypothesis:
+  title: "service-should-not-fail"
+  probes:
+    - type: probe
+      name: "latency-alarm-should-be-OK"
+      tolerance: "OK"
+      provider:
+        type: python
+        module: chaosaws.cloudwatch.probes
+        func: get_alarm_state_value
+        arguments:
+          alarm_name: "user-facing-alb-avg-target-response-time"
+    - type: probe
+      name: "site-responsive"
+      tolerance: true
+      provider:
+        func: http
+        module: chaosgrafana.k6.probes
+        type: python
+        arguments:
+          endpoint: ${application_url}/users
+          method: GET
+          timeout: 5
+          duration: 10s
+          vus: 2
+
 method:
   - type: action
-    name: "wait-for-proxy-active"
+    name: "wait-for-toxiproxy-active"
     provider:
       type: python
       module: devlearnops.http.probes
@@ -39,17 +74,17 @@ method:
         timeout: 180
 
   - type: action
-    name: "setup-proxy"
+    name: "create-proxy-for-dependency"
     provider:
       type: python
       module: chaostoxi.proxy.actions
       func: create_proxy
       arguments:
-        proxy_name: test
-        upstream_host: "internal-live-comments-full-internal-456064403.us-east-1.elb.amazonaws.com"
+        proxy_name: "ecs-service-slow-dependency"
+        upstream_host: ${proxy_upstream_host}
         upstream_port: 80
         listen_host: 0.0.0.0
-        listen_port: 8080
+        listen_port: 8000
         enabled: true
 
   - type: action
@@ -57,7 +92,7 @@ method:
     provider:
       type: python
       module: chaosawsattacks.ecs.actions
-      func: update_service_environment
+      func: update_service_configuration
       arguments:
         cluster: ${cluster_name}
         service: ${service_name}
@@ -66,7 +101,7 @@ method:
           BACK_URL: "http://${tf_out__toxiproxy_private_ip}:8080/spam"
 
   - type: action
-    name: "apply-constant-load"
+    name: "apply-user-load-ramp"
     background: true
     provider:
       func: run_script
@@ -74,8 +109,11 @@ method:
       type: python
       arguments:
         script_path: ${script_file}
-        vus: ${stress_users}
-        duration: "10m"
+        stages:
+          - duration: 5m
+            target: ${stress_users}
+          - duration: 10m
+            target: ${stress_users}
         environ:
           COMMENTS_URL: "${application_url}"
 
@@ -86,13 +124,13 @@ method:
       module: chaostoxi.toxic.actions
       func: create_latency_toxic
       arguments:
-        for_proxy: test
+        for_proxy: "ecs-service-slow-dependency"
         toxic_name: "latency"
-        latency: 2000
-        jitter: 500
+        latency: 5000
+        jitter: 1000
     pauses:
-      before: 60
-      after: 540
+      before: 300
+      after: 600
 
 rollbacks:
   - type: action
@@ -111,5 +149,5 @@ rollbacks:
       module: chaostoxi.toxic.actions
       func: delete_toxic
       arguments:
-        for_proxy: test
+        for_proxy: "ecs-service-slow-dependency"
         toxic_name: "latency"

@@ -11,6 +11,9 @@ failover is more realistic when done with reboot_db_instance with `force_failove
 - fault tolerance: service can survive AZ failure (remove subnets in AZ)
 - fault tolerance: LB can survive AZ failure 
 - fault tolerance: RDS instance can survive AZ failure 
+- fault tolerance: service enviornment misconfiguration
+- fault tolerance: service should fallback if s3 bucket not available??
+- alerting: service logging and metrics configuration - alert when there are no metrics
 
 ### Service resiliency ideas
 
