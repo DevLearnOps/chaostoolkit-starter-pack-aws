@@ -26,7 +26,14 @@ configuration:
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
-  proxy_upstream_host: "internal-live-comments-full-internal-456064403.us-east-1.elb.amazonaws.com"
+  proxy_upstream_host:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/app/comments/live/internal_alb_dns_name"
   application_url:
     type: probe
     provider:

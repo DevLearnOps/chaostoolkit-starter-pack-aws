@@ -34,7 +34,7 @@ variable "public_subnets_parameter" {
 }
 variable "instance_type" {
   type    = string
-  default = "t2.micro"
+  default = "t3.micro"
 }
 
 data "aws_ssm_parameter" "vpc_id" {

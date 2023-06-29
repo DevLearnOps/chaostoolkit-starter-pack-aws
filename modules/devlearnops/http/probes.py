@@ -19,9 +19,13 @@ def wait_for_service_active(
     time_limit = time.time() + timeout
 
     while time.time() < time_limit:
-        response = requests.get(url)
-        if response.status_code == status:
-            return True
+        try:
+            response = requests.get(url)
+            if response.status_code == status:
+                return True
+        except requests.exceptions.ConnectionError:
+            pass
+
         time.sleep(5)
 
     raise FailedActivity("Service still unstable after timeout.")
