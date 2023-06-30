@@ -71,6 +71,13 @@ module "ec2_secgroup" {
       description = "Ingress for proxies"
       cidr_blocks = "0.0.0.0/0"
     },
+    {
+      from_port   = 3306
+      to_port     = 3306
+      protocol    = "tcp"
+      description = "Ingress for MySQL/Aurora proxies"
+      cidr_blocks = "0.0.0.0/0"
+    },
   ]
 
   egress_rules       = ["all-all"]

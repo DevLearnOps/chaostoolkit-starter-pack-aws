@@ -28,14 +28,17 @@ steady-state-hypothesis:
   title: "service-should-not-fail"
   probes:
     - type: probe
-      name: "latency-alarm-should-be-OK"
-      tolerance: "OK"
+      name: "alarms-should-be-in-expected-state"
+      tolerance: true
       provider:
         type: python
-        module: chaosaws.cloudwatch.probes
-        func: get_alarm_state_value
+        module: devlearnops.aws.cloudwatch.probes
+        func: check_alarm_state_value
         arguments:
-          alarm_name: "user-facing-alb-avg-target-response-time"
+          alarm_names:
+            - "internal-http-target-5xx-count-alarm"
+            - "user-facing-alb-avg-target-response-time"
+          expected: ["OK", "INSUFFICIENT_DATA"]
     - type: probe
       name: "site-responsive"
       tolerance: true

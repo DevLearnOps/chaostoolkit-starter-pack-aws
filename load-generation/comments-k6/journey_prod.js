@@ -81,13 +81,28 @@ export default function (data) {
        
     // Post and update comments
     // Creates and or updates comments according to load target percentages
-    http.get(`${host}/comments`);
+    let count=5;
+    let more=0;
+    let interestingCommentId = null;
+    while(more >= 0) {
+        let response = http.get(`${host}/posts/${postId}/comments?count=${count}&more=${more}`);
+        if(response.status !== 200) {
+            console.log(`Failed to get comments for post with id=${postId}`);
+            break;
+        } else {
+            let data = JSON.parse(response.body);
+            let randomComment = pickRand(data.comments);
+            interestingCommentId = randomComment !== undefined ? randomComment.id : null;
+            count = data.paginationInfo.count;
+            more = data.paginationInfo.more;
+        }
+    }
 
     if (targetPercent(40)) {
         let commentPayload = {
             content: pickRand(comments).content,
             user: userId,
-            replyTo: null,
+            replyTo: targetPercent(60) ? interestingCommentId : null,
             post: postId
         };
 

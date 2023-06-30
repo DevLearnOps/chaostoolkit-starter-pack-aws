@@ -51,3 +51,8 @@ resource "aws_ssm_parameter" "comments_db_connection_string" {
   value = "jdbc:mysql://${module.db_default.db_instance_endpoint}/${local.db_schema}"
   type  = "String"
 }
+resource "aws_ssm_parameter" "comments_db_instance_address" {
+  name  = "/app/comments/db_instance_address"
+  value = module.db_default.db_instance_address
+  type  = "String"
+}
