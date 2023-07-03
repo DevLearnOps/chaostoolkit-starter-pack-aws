@@ -1,10 +1,9 @@
-title: Service should function normally when a minor dependency is slow to respond
+title: Service should function normally even when its main datasource is under heavy load
 description: |-
-  This experiment verifies that when a minor dependency of the targeted service is
-  slow to respond it does not have a major impact on users.
-  The template uses `chaostoolkit-terraform` to temporarily create a ToxiProxy server
-  instance on EC2 and routes traffic to the spam-check-service through the proxy to
-  simulate high latency on spam-check.
+  This experiment verifies that the targeted service can still function normally when
+  its main datasource is experiencing high volume of requests, hence responding with additional
+  latency. The template uses `chaostoolkit-terraform` to temporarily create a ToxiProxy server
+  instance on EC2 and routes database traffic through the proxy to simulate high latency.
 
 contributions:
   security: "none"
@@ -22,18 +21,20 @@ controls:
           toxiproxy_admin_url: "toxiproxy_url"
 
 configuration:
+  additional_db_latency: 80
+  additional_db_latency_jitter: 20
   stress_users: 30
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
   service_name: "comments-api-service"
-  proxy_upstream_host:
+  db_instance_address:
     type: probe
     provider:
       type: python
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/app/comments/live/internal_alb_dns_name"
+        name: "/app/comments/db_instance_address"
   application_url:
     type: probe
     provider:
@@ -66,8 +67,8 @@ steady-state-hypothesis:
           endpoint: ${application_url}/users
           method: GET
           timeout: 5
-          duration: 10s
-          vus: 2
+          duration: "5s"
+          vus: 1
 
 method:
   - type: action
@@ -81,17 +82,17 @@ method:
         timeout: 180
 
   - type: action
-    name: "create-proxy-for-dependency"
+    name: "create-proxy-for-datasource"
     provider:
       type: python
       module: chaostoxi.proxy.actions
       func: create_proxy
       arguments:
-        proxy_name: "ecs-service-slow-dependency"
-        upstream_host: ${proxy_upstream_host}
-        upstream_port: 80
+        proxy_name: "comments-rds"
+        upstream_host: ${db_instance_address}
+        upstream_port: 3306
         listen_host: 0.0.0.0
-        listen_port: 8000
+        listen_port: 3306
         enabled: true
 
   - type: action
@@ -105,7 +106,7 @@ method:
         service: ${service_name}
         container_name: "comments_api"
         environ:
-          BACK_URL: "http://${tf_out__toxiproxy_private_ip}:8080/spam"
+          SPRING_DATASOURCE_URL: "jdbc:mysql://${tf_out__toxiproxy_private_ip}:3306/COMMENTS_API"
 
   - type: action
     name: "apply-user-load-ramp"
@@ -131,10 +132,10 @@ method:
       module: chaostoxi.toxic.actions
       func: create_latency_toxic
       arguments:
-        for_proxy: "ecs-service-slow-dependency"
+        for_proxy: "comments-rds"
         toxic_name: "latency"
-        latency: 5000
-        jitter: 1000
+        latency: ${additional_db_latency}
+        jitter: ${additional_db_latency_jitter}
     pauses:
       before: 300
       after: 600
@@ -156,5 +157,5 @@ rollbacks:
       module: chaostoxi.toxic.actions
       func: delete_toxic
       arguments:
-        for_proxy: "ecs-service-slow-dependency"
+        for_proxy: "comments-rds"
         toxic_name: "latency"

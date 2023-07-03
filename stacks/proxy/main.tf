@@ -34,7 +34,7 @@ variable "public_subnets_parameter" {
 }
 variable "instance_type" {
   type    = string
-  default = "t2.micro"
+  default = "t3.micro"
 }
 
 data "aws_ssm_parameter" "vpc_id" {
@@ -69,6 +69,13 @@ module "ec2_secgroup" {
       to_port     = 9000
       protocol    = "tcp"
       description = "Ingress for proxies"
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      from_port   = 3306
+      to_port     = 3306
+      protocol    = "tcp"
+      description = "Ingress for MySQL/Aurora proxies"
       cidr_blocks = "0.0.0.0/0"
     },
   ]

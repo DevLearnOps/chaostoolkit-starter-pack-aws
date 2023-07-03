@@ -1,0 +1,8 @@
+s3-upload:
+  provider:
+    type: python
+    module: chaosaws.s3.controls.upload
+    arguments:
+      bucket_name: "${JOURNALS_BUCKET}"
+      suffix_with_timestamp: true
+      dirpath: 'journals'
