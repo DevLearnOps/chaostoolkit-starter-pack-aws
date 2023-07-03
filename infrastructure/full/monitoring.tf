@@ -8,9 +8,9 @@ module "avg_response_time_internal_alarm" {
   threshold           = 1.0
   period              = 60
 
-  namespace   = "AWS/ApplicationELB"
-  metric_name = "TargetResponseTime"
-  statistic   = "Average"
+  namespace          = "AWS/ApplicationELB"
+  metric_name        = "TargetResponseTime"
+  statistic          = "Average"
   treat_missing_data = "notBreaching"
 
   dimensions = {
@@ -28,9 +28,9 @@ module "avg_response_time_user_alarm" {
   threshold           = 1.2
   period              = 60
 
-  namespace   = "AWS/ApplicationELB"
-  metric_name = "TargetResponseTime"
-  statistic   = "Average"
+  namespace          = "AWS/ApplicationELB"
+  metric_name        = "TargetResponseTime"
+  statistic          = "Average"
   treat_missing_data = "notBreaching"
 
   dimensions = {
@@ -48,9 +48,9 @@ module "http_target_5xx_count_internal_alarm" {
   threshold           = 100
   period              = 60
 
-  namespace   = "AWS/ApplicationELB"
-  metric_name = "HTTPCode_Target_5XX_Count"
-  statistic   = "Sum"
+  namespace          = "AWS/ApplicationELB"
+  metric_name        = "HTTPCode_Target_5XX_Count"
+  statistic          = "Sum"
   treat_missing_data = "notBreaching"
 
   dimensions = {

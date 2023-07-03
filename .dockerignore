@@ -1,0 +1,13 @@
+.git
+.github
+infrastructure/
+tools/
+.flake8
+.gitignore
+.venv
+Makefile
+Pipfile*
+README.md
+**/.terraform/
+**/.terraform*
+**/terraform.tfstate*

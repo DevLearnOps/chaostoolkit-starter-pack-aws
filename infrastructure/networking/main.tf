@@ -150,3 +150,13 @@ module "db_default" {
   skip_final_snapshot     = true
   deletion_protection     = false
 }
+
+module "compute_environment" {
+  source = "../compute-environment"
+
+  environment = "live"
+  program     = "chaos"
+
+  vpc_id  = module.vpc.vpc_id
+  subnets = module.vpc.public_subnets
+}
