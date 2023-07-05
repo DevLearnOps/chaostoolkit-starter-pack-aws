@@ -12,10 +12,6 @@ if [[ -e $ENV_FILE ]]; then
     export $(cat $ENV_FILE | xargs)
 fi
 
-echo "Generating file control for s3 journal upload"
-cat /chaos/scripts/s3-upload.yaml.template | envsubst \
-    > /chaos/scripts/s3-upload.yaml
-
 CHAOS_CMD="chaos run"
 CHAOS_CMD="$CHAOS_CMD --rollback-strategy ${ROLLBACK_STRATEGY-always}"
 CHAOS_CMD="$CHAOS_CMD --hypothesis-strategy ${HYPOTHESIS_STRATEGY-default}"
@@ -25,7 +21,19 @@ if [[ "$FAIL_FAST" == "true" ]]; then
     CHAOS_CMD="$CHAOS_CMD --fail-fast"
 fi
 
-CHAOS_CMD="$CHAOS_CMD --control-file=/chaos/scripts/s3-upload.yaml"
+###########################################################
+# Journal upload to s3 bucket. Uncomment the lines below
+#   to activate the control for all experiments.
+###########################################################
+# echo "Generating file control for s3 journal upload"
+# cat /chaos/scripts/s3-upload.yaml.template | envsubst \
+#     > /chaos/scripts/s3-upload.yaml
+# 
+# CHAOS_CMD="$CHAOS_CMD --control-file=/chaos/scripts/s3-upload.yaml"
+
 CHAOS_CMD="$CHAOS_CMD ${EXPERIMENT_FILE-experiment.yaml}"
 
-eval "$CHAOS_CMD"
+# suppressing experiment failure to allow journal upload and reporting
+eval "$CHAOS_CMD" || true
+
+python3 /chaos/scripts/upload_and_notify.py

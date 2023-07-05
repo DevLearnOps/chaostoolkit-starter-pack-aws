@@ -5,6 +5,16 @@ A starter pack full of ChaosToolkit experiments for AWS infrastructure
 
 failover is more realistic when done with reboot_db_instance with `force_failover=True`
 
+## TODO
+- [ ] add safeguards to prevent experiments from starting if site unstable
+- [ ] set experiment.env for all existing experiments
+- [ ] fix steady state verifications for all existing experiments
+- [ ] automate experiment submission on pipeline
+- [ ] evaluate experiments and send metrics to cloudwatch
+- [ ] create in cloudwatch a dashboard to show the experiment execution results
+- [ ] create in cloudwatch alarms to trigger notifications when an experiment fails or is stopped prematurely
+
+
 ### Basket
 - capacity: prevent experiments from running if system unstable
 - capacity: verify service can reach X successful rps with acceptable latency
@@ -16,6 +26,9 @@ failover is more realistic when done with reboot_db_instance with `force_failove
 - fault tolerance: service should fallback if s3 bucket not available??
 - fault tolerance: service with slower DB should not collapse at capacity
 - alerting: service logging and metrics configuration - alert when there are no metrics
+
+- faults: allow ungraceful termination of tasks to speed up deployment
+- faults: check deployment completion after timeout and rollback if deployment failed
 
 ### Service resiliency ideas
 
