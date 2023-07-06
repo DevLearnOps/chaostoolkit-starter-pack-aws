@@ -4,7 +4,7 @@ description: |
   from container failure within a certain time frame.
 
 contributions:
-  security: "low"
+  security: "none"
   reliability: "high"
   scalability: "medium"
 
@@ -31,7 +31,7 @@ steady-state-hypothesis:
         type: http
         url: "${application_url}/users"
         method: GET
-        timeout: 2
+        timeout: 5
     - name: "desired-equals-running"
       type: probe
       tolerance: true

@@ -11,3 +11,5 @@ README.md
 **/.terraform/
 **/.terraform*
 **/terraform.tfstate*
+chaostoolkit.log
+journal.json

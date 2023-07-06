@@ -9,17 +9,32 @@ locals {
   memory     = 2048
 }
 
+data "aws_sns_topic" "notification" {
+  count = length(var.notification_topic) > 0 ? 1 : 0
+  name  = var.notification_topic
+}
+
 resource "aws_security_group" "default" {
   name        = "${var.environment}-${var.program}-default-batch-secgroup"
   description = "Default security group for Batch Compute Environment"
   vpc_id      = var.vpc_id
 }
 
+resource "aws_vpc_security_group_egress_rule" "default" {
+  security_group_id = aws_security_group.default.id
+
+  ip_protocol = "tcp"
+  from_port   = 0
+  to_port     = 65535
+  cidr_ipv4   = "0.0.0.0/0"
+}
+
 ###########################################################################
 #  Journals Reporting S3 Bucket
 ###########################################################################
 resource "aws_s3_bucket" "this" {
-  bucket = "${local.account_id}-${var.environment}-ctk-journals"
+  bucket        = "${local.account_id}-${var.environment}-ctk-journals"
+  force_destroy = true
 }
 
 ###########################################################################
@@ -114,6 +129,13 @@ resource "aws_iam_role_policy" "job" {
         Effect   = "Allow"
         Resource = "*"
       },
+      {
+        Action = [
+          "sns:Publish",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
     ]
   })
 }
@@ -131,9 +153,10 @@ resource "aws_batch_job_definition" "this" {
     jobRoleArn       = aws_iam_role.job.arn
     executionRoleArn = aws_iam_role.job_task_execution.arn
 
-    environment = [
-      { "name" : "JOURNALS_BUCKET", "value" : aws_s3_bucket.this.id },
-    ]
+    environment = concat(
+      [{ "name" : "JOURNALS_BUCKET", "value" : aws_s3_bucket.this.id }],
+      [for item in data.aws_sns_topic.notification : { "name" : "FAILED_EXPERIMENT_TOPIC_ARN", "value" : item.arn }],
+    )
 
     networkConfiguration = {
       assignPublicIp = "ENABLED"

@@ -10,7 +10,7 @@ contributions:
   scalability: "low"
 
 configuration:
-  db_cluster_identifier: "live-comments-full-cluster"
+  db_cluster_identifier: "chaos-networking-default"
   acceptable_downtime: 120
   application_url:
     type: probe
@@ -31,7 +31,7 @@ steady-state-hypothesis:
         type: http
         url: "${application_url}/users"
         method: GET
-        timeout: 2
+        timeout: 5
     - name: "instance-status"
       type: probe
       tolerance: available
@@ -40,7 +40,7 @@ steady-state-hypothesis:
         module: chaosaws.rds.probes
         func: instance_status
         arguments:
-          instance_id: ${db_instance_identifier}
+          instance_id: ${db_cluster_identifier}
 
 method:
   - name: "failover-db-cluster"

@@ -1,9 +1,8 @@
 from botocore.exceptions import ClientError
-from chaoslib.exceptions import FailedActivity
-from chaoslib.types import Configuration, Secrets
-
 from chaosaws import aws_client
 from chaosaws.types import AWSResponse
+from chaoslib.exceptions import FailedActivity
+from chaoslib.types import Configuration, Secrets
 
 __all__ = [
     "start_db_instance",

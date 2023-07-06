@@ -1,5 +1,8 @@
 FROM python:3.11-slim-bullseye
 
+#############################################################
+# install AWS cloudwatch agent
+#############################################################
 RUN : \
     && apt-get update \
     && apt-get install --no-install-recommends -qq -y \
@@ -14,6 +17,9 @@ RUN : \
 
 ENV ECS_AVAILABLE_LOGGING_DRIVERS='["json-file","awslogs"]'
 
+#############################################################
+# install Grafana k6 binary
+#############################################################
 ARG K6_VERSION="0.45.0"
 RUN : \
     && set -eux \
@@ -31,6 +37,9 @@ RUN : \
     && ln -s -T /opt/k6-*/k6 /usr/local/bin/k6 \
     && :
 
+#############################################################
+# install terraform binary
+#############################################################
 ARG TERRAFORM_VERSION="1.5.2"
 RUN : \
     && set -eux \
@@ -42,6 +51,9 @@ RUN : \
     && ln -s -T /opt/terraform /usr/local/bin/terraform \
     && :
 
+#############################################################
+# install Python modules for chaos experiments
+#############################################################
 RUN : \
     && pip install --no-cache-dir -U pip \
     && pip install --no-cache-dir -U \
@@ -49,6 +61,8 @@ RUN : \
         setuptools \
         wheel \
         envsubst \
+        click \
+        marshmallow \
         jsonpath2 \
         chaostoolkit \
         chaostoolkit-lib \
@@ -60,6 +74,9 @@ RUN : \
         'git+https://github.com/mcastellin/chaostoolkit-aws-attacks.git@main#egg=chaostoolkit-aws-attacks' \
     && :
 
+#############################################################
+# install custom modules and experiment files
+#############################################################
 WORKDIR /chaos
 COPY . .
 

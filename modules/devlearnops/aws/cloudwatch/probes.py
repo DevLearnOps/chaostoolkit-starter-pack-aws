@@ -1,4 +1,4 @@
-from typing import List, Any
+from typing import Any, List
 
 from chaosaws.cloudwatch.probes import get_alarm_state_value
 from chaoslib.exceptions import FailedActivity

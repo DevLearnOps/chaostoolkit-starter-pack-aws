@@ -1,0 +1,22 @@
+Hi,
+
+The following chaos experiment completed with [$experiment_status] status. See details below.
+
+Account Id: $aws_account_id
+Region: $aws_region
+
+Experiment: $experiment_title
+  - Duration: $total_duration
+  - Result: $experiment_result
+  - Status: $experiment_status
+
+Execution Summary
+$execution_summary
+
+For more details, you can download experiment journal and logs:
+
+aws s3 cp --recursive s3://$journals_bucket/$experiment_files_location/ ./
+
+Thanks,
+
+The Chaos Engineering Team

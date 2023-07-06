@@ -9,8 +9,10 @@ chaostoolkit-aws = "*"
 chaostoolkit-addons = "*"
 chaostoolkit-grafana = "*"
 chaostoolkit-terraform = "*"
-jsonpath2 = "*"
 chaostoolkit-toxiproxy = "*"
+jsonpath2 = "*"
+marshmallow = "*"
+click = "*"
 
 [dev-packages]
 

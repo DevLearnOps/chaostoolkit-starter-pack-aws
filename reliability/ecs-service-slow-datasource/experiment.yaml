@@ -21,8 +21,8 @@ controls:
           toxiproxy_admin_url: "toxiproxy_url"
 
 configuration:
-  additional_db_latency: 80
-  additional_db_latency_jitter: 20
+  additional_db_latency: 200
+  additional_db_latency_jitter: 50
   stress_users: 30
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-comments-full-cluster"
@@ -48,14 +48,17 @@ steady-state-hypothesis:
   title: "service-should-not-fail"
   probes:
     - type: probe
-      name: "latency-alarm-should-be-OK"
-      tolerance: "OK"
+      name: "alarms-should-be-in-expected-state"
+      tolerance: true
       provider:
         type: python
-        module: chaosaws.cloudwatch.probes
-        func: get_alarm_state_value
+        module: devlearnops.aws.cloudwatch.probes
+        func: check_alarm_state_value
         arguments:
-          alarm_name: "user-facing-alb-avg-target-response-time"
+          alarm_names:
+            - "internal-http-target-5xx-count-alarm"
+            - "user-facing-alb-avg-target-response-time"
+          expected: ["OK", "INSUFFICIENT_DATA"]
     - type: probe
       name: "site-responsive"
       tolerance: true
@@ -109,8 +112,7 @@ method:
           SPRING_DATASOURCE_URL: "jdbc:mysql://${tf_out__toxiproxy_private_ip}:3306/COMMENTS_API"
 
   - type: action
-    name: "apply-user-load-ramp"
-    background: true
+    name: "ramp-up-user-load"
     provider:
       func: run_script
       module: chaosgrafana.k6.actions
@@ -120,25 +122,36 @@ method:
         stages:
           - duration: 5m
             target: ${stress_users}
-          - duration: 10m
-            target: ${stress_users}
         environ:
           COMMENTS_URL: "${application_url}"
 
   - type: action
-    name: "toxic"
+    name: "introduce-downstream-latency"
     provider:
       type: python
       module: chaostoxi.toxic.actions
-      func: create_latency_toxic
+      func: create_toxic
       arguments:
         for_proxy: "comments-rds"
-        toxic_name: "latency"
-        latency: ${additional_db_latency}
-        jitter: ${additional_db_latency_jitter}
-    pauses:
-      before: 300
-      after: 600
+        toxic_name: "datasource-latency"
+        toxic_type: "latency"
+        toxicity: 0.6
+        attributes:
+          latency: ${additional_db_latency}
+          jitter: ${additional_db_latency_jitter}
+
+  - type: action
+    name: "maintain-user-load"
+    provider:
+      func: run_script
+      module: chaosgrafana.k6.actions
+      type: python
+      arguments:
+        script_path: ${script_file}
+        vus: ${stress_users}
+        duration: 10m
+        environ:
+          COMMENTS_URL: "${application_url}"
 
 rollbacks:
   - type: action
@@ -158,4 +171,4 @@ rollbacks:
       func: delete_toxic
       arguments:
         for_proxy: "comments-rds"
-        toxic_name: "latency"
+        toxic_name: "datasource-latency"
