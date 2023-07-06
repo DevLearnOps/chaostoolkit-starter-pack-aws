@@ -128,7 +128,7 @@ class Journal:
             results = [activity.fail_summary() for activity in self.run]
             run_summaries = "\n".join([item for item in results if item is not None])
             if run_summaries:
-                content = "# Failed Expeirment Method Activities\n\n"
+                content = "# Failed Experiment Method Activities\n\n"
                 content += run_summaries
                 summary.append(content)
 
@@ -138,7 +138,7 @@ class Journal:
                 [item for item in results if item is not None]
             )
             if rollback_summaries:
-                content = "# Failed Expeirment Rollbacks Activities\n\n"
+                content = "# Failed Experiment Rollbacks Activities\n\n"
                 content += rollback_summaries
                 summary.append(content)
 
