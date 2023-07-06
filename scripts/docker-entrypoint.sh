@@ -5,7 +5,7 @@ export PYTHONPATH="/chaos/modules/:${PYTHONPATH}"
 CTK_JOURNAL_FILE="${CTK_JOURNAL_FILE-journal.json}"
 CTK_LOG_FILE="${CTK_LOG_FILE-chaostoolkit.log}"
 
-EXPERIMENT_PATH="${EXPERIMENT_PATH-reliability/ecs-service-tasks-failure}"
+EXPERIMENT_PATH="${EXPERIMENT_PATH-reliability/dummy}"
 EXPERIMENT_FILE="${EXPERIMENT_FILE-experiment.yaml}"
 ENV_FILE="experiment.env"
 

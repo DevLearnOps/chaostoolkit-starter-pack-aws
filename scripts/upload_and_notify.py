@@ -73,7 +73,7 @@ def upload_journal_and_logs(journals_bucket, journal_path, ctk_logs_path) -> str
     help="The path of the chaostoolkit journal file",
 )
 @click.option(
-    "--logs-file",
+    "--log-file",
     required=False,
     default="chaostoolkit.log",
     type=click.Path(exists=True),
@@ -85,11 +85,11 @@ def upload_journal_and_logs(journals_bucket, journal_path, ctk_logs_path) -> str
     default=lambda: os.getenv("JOURNALS_BUCKET"),
     help="The name of the S3 bucket destination for journals",
 )
-def cli(journal_file, logs_file, journals_bucket):
+def cli(journal_file, log_file, journals_bucket):
     upload_path = upload_journal_and_logs(
         journals_bucket=journals_bucket,
         journal_path=journal_file,
-        ctk_logs_path=logs_file,
+        ctk_logs_path=log_file,
     )
 
     _, experiment_report = journal.execution_report(journal_path=journal_file)
