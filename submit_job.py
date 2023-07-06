@@ -15,7 +15,21 @@ if profile:
 client = boto3.client("batch", **params)
 
 
-def _submit_job(job_details):
+def _parse_env(env: list):
+    environment = []
+    for env_var in env:
+        if "=" not in env_var:
+            raise ValueError(
+                "Environment variable is not properly formed. Use --env 'KEY=value'"
+            )
+
+        key, value = env_var.split("=", maxsplit=1)
+        environment.append({"name": key, "value": value})
+
+    return environment
+
+
+def _submit_job(job_details, environ: list):
     experiment_path = job_details["path"]
     cur_time = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     experiment_last_path = experiment_path.split("/")[-1]
@@ -31,6 +45,8 @@ def _submit_job(job_details):
             "value": job_details["experiment_file"],
         },
     ]
+    environment.extend(environ)
+
     client.submit_job(
         jobName=name,
         jobQueue="live-chaos-batch-job-queue",
@@ -59,8 +75,14 @@ def _submit_job(job_details):
     default=2048,
     help="The memory (in MB) for the chaos job",
 )
+@click.option(
+    "--env",
+    "-e",
+    multiple=True,
+    help="Override environment variable for job execution. Format: --env 'KEY=value'",
+)
 @click.argument("experiment-path", type=click.Path(exists=True))
-def cli(vcpu, memory, experiment_path):
+def cli(vcpu, memory, env, experiment_path):
     experiment_file = "experiment.yaml"
     if os.path.isfile(experiment_path):
         experiment_file = os.path.basename(experiment_path)
@@ -72,7 +94,7 @@ def cli(vcpu, memory, experiment_path):
         "vcpu": vcpu,
         "memory": memory,
     }
-    _submit_job(job_details)
+    _submit_job(job_details=job_details, environ=_parse_env(env))
 
 
 if __name__ == "__main__":
