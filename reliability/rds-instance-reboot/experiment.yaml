@@ -8,7 +8,7 @@ contributions:
   scalability: "low"
 
 configuration:
-  db_instance_identifier: "chaos-infrastructure-default"
+  db_instance_identifier: "chaos-networking-default"
   acceptable_downtime: 120
   application_url:
     type: probe
