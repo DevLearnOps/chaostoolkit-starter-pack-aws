@@ -5,11 +5,20 @@ remote_state {
     if_exists = "overwrite"
   }
   config = {
-    bucket         = "309172550216-comments-full-terraform-state"
+    bucket         = "309172550216-live-chaos-full-terraform-state"
     key            = "${path_relative_to_include()}/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    dynamodb_table = "terraform-state-lock-table"
+    dynamodb_table = "live-chaos-full-terraform-state-lock-table"
   }
 }
 
+inputs = {
+  environment = "live"
+  program = "chaos"
+  application_name = "comments"
+  tags = tomap({
+    ChaosEngineeringTeam = true
+  })
+  sns_notification_topic_name = "chaos-results-notification-topic"
+}

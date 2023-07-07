@@ -5,17 +5,15 @@ data "aws_region" "current" {}
 locals {
   account_id = data.aws_caller_identity.current.account_id
   region     = data.aws_region.current.name
-  max_vcpus  = 1
-  memory     = 2048
 }
 
 data "aws_sns_topic" "notification" {
-  count = length(var.notification_topic) > 0 ? 1 : 0
-  name  = var.notification_topic
+  count = length(var.sns_notification_topic_name) > 0 ? 1 : 0
+  name  = var.sns_notification_topic_name
 }
 
 resource "aws_security_group" "default" {
-  name        = "${var.environment}-${var.program}-default-batch-secgroup"
+  name        = "${var.name}-default-batch-secgroup"
   description = "Default security group for Batch Compute Environment"
   vpc_id      = var.vpc_id
 }
@@ -33,7 +31,7 @@ resource "aws_vpc_security_group_egress_rule" "default" {
 #  Journals Reporting S3 Bucket
 ###########################################################################
 resource "aws_s3_bucket" "this" {
-  bucket        = "${local.account_id}-${var.environment}-ctk-journals"
+  bucket        = "${local.account_id}-${var.name}-ctk-journals"
   force_destroy = true
 }
 
@@ -54,7 +52,7 @@ data "aws_iam_policy_document" "service" {
 }
 
 resource "aws_iam_role" "service" {
-  name               = "${var.environment}-${var.program}-batch-service-role"
+  name               = "${var.name}-batch-service-role"
   assume_role_policy = data.aws_iam_policy_document.service.json
 }
 
@@ -64,11 +62,11 @@ resource "aws_iam_role_policy_attachment" "service" {
 }
 
 resource "aws_batch_compute_environment" "this" {
-  compute_environment_name = "${var.environment}-${var.program}-compute-environment"
+  compute_environment_name = "${var.name}-compute-environment"
 
   compute_resources {
     type      = "FARGATE"
-    max_vcpus = local.max_vcpus
+    max_vcpus = var.max_vcpus
     security_group_ids = [
       aws_security_group.default.id
     ]
@@ -96,7 +94,7 @@ data "aws_iam_policy_document" "ecs_execution" {
 }
 
 resource "aws_iam_role" "job_task_execution" {
-  name               = "${var.environment}-${var.program}-batch-task-execution-role"
+  name               = "${var.name}-batch-task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_execution.json
 }
 
@@ -106,12 +104,12 @@ resource "aws_iam_role_policy_attachment" "job_task_execution" {
 }
 
 resource "aws_iam_role" "job" {
-  name               = "${var.environment}-${var.program}-batch-job-role"
+  name               = "${var.name}-batch-job-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_execution.json
 }
 
 resource "aws_iam_role_policy" "job" {
-  name = "${var.environment}-${var.program}-batch-job-role-policy"
+  name = "${var.name}-batch-job-role-policy"
   role = aws_iam_role.job.id
 
   policy = jsonencode({
@@ -141,7 +139,7 @@ resource "aws_iam_role_policy" "job" {
 }
 
 resource "aws_batch_job_definition" "this" {
-  name = "${var.environment}-${var.program}-batch-job-definition"
+  name = "${var.name}-batch-job-definition"
   type = "container"
 
   platform_capabilities = [
@@ -173,11 +171,11 @@ resource "aws_batch_job_definition" "this" {
     resourceRequirements = [
       {
         type  = "VCPU"
-        value = tostring(local.max_vcpus)
+        value = tostring(var.max_vcpus)
       },
       {
         type  = "MEMORY"
-        value = tostring(local.memory)
+        value = tostring(var.task_memory)
       }
     ]
 
@@ -188,7 +186,7 @@ resource "aws_batch_job_definition" "this" {
 #  Job Queue
 ###########################################################################
 resource "aws_batch_job_queue" "this" {
-  name     = "${var.environment}-${var.program}-batch-job-queue"
+  name     = "${var.name}-batch-job-queue"
   state    = "ENABLED"
   priority = 1
   compute_environments = [

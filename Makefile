@@ -7,3 +7,6 @@ clean:
 format:
 	find . -type f -name '*.py' | xargs isort
 	find . -type f -name '*.py' | xargs black
+	terraform -chdir=infrastructure/base/ fmt
+	terraform -chdir=infrastructure/submodules/compute-environment/ fmt
+	terraform -chdir=infrastructure/full/ fmt
