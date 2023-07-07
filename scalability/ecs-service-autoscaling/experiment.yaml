@@ -57,7 +57,7 @@ steady-state-hypothesis:
       tolerance:
         type: jsonpath
         path: '$["services"][0]["desiredCount"]'
-        expect: 3
+        expect: 4
       provider:
         type: python
         module: chaosaws.ecs.probes
