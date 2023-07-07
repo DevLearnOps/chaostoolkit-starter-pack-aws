@@ -9,7 +9,7 @@ contributions:
 configuration:
   stress_users: 10
   script_file: "../../load-generation/comments-k6/journey_prod.js"
-  cluster_name: "live-comments-full-cluster"
+  cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
   application_url:
     type: probe
@@ -18,7 +18,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/app/comments/live/web_url"
+        name: "/live/app/comments/web_url"
 
 steady-state-hypothesis:
   title: "Verify web server is available"

@@ -19,7 +19,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/app/comments/live/web_url"
+        name: "/live/app/comments/web_url"
 
 steady-state-hypothesis:
   title: "service-is-stable"

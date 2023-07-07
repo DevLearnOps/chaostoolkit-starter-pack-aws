@@ -14,7 +14,7 @@ contributions:
 configuration:
   max_desired_count: 3
   original_desired_count: 1
-  cluster_name: "live-comments-full-cluster"
+  cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
   application_url:
     type: probe
@@ -23,7 +23,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/app/comments/live/web_url"
+        name: "/live/app/comments/web_url"
 
 controls:
   - name: "configure-alarm-with-terraform"
