@@ -17,6 +17,7 @@ inputs = {
   environment = "live"
   program = "chaos"
   application_name = "comments"
+  application_version = "v1"
   tags = tomap({
     ChaosEngineeringTeam = true
   })

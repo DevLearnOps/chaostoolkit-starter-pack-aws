@@ -4,7 +4,7 @@ APP_VERSION=latest
 APP_NAME=chaos-starter-aws
 
 echo "Creating ECR repository ${APP_NAME}"
-aws ecr create-repository \
+AWS_PAGER="" aws ecr create-repository \
     --repository-name "$APP_NAME" \
     --output text 2>/dev/null || true
 

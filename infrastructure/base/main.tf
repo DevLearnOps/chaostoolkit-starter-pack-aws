@@ -91,7 +91,7 @@ module "vpc_endpoints" {
 ########################################################################
 locals {
   db_port     = 3306
-  db_username = "${var.application_name}-user"
+  db_username = "${var.application_name}_user"
   db_schema   = "${upper(var.application_name)}_SCHEMA"
 }
 
