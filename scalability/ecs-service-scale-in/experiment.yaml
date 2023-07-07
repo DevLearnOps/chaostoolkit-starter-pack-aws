@@ -12,9 +12,9 @@ contributions:
   scalability: "high"
 
 configuration:
-  max_desired_count: 3
-  original_desired_count: 1
-  cluster_name: "live-comments-full-cluster"
+  max_desired_count: 4
+  original_desired_count: 2
+  cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
   application_url:
     type: probe
@@ -23,7 +23,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/app/comments/live/web_url"
+        name: "/live/app/comments/web_url"
 
 steady-state-hypothesis:
   title: "Verify web server is available"

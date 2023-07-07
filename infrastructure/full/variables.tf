@@ -1,77 +1,84 @@
-variable "application_name" {
-  type    = string
-  default = "comments"
-}
-
 variable "environment" {
-  type    = string
-  default = "live"
+  description = "The environment name for the infrastructure deployment"
+  type        = string
 }
 
-variable "s3_prefix_list_id_parameter" {
-  type    = string
-  default = "/vpc/s3_prefix_list_id"
-}
-variable "vpc_id_parameter" {
-  type    = string
-  default = "/vpc/id"
-}
-variable "public_subnets_parameter" {
-  type    = string
-  default = "/vpc/public_subnets"
-}
-variable "private_subnets_parameter" {
-  type    = string
-  default = "/vpc/private_subnets"
-}
-variable "vpc_cidr_block_parameter" {
-  type    = string
-  default = "/vpc/cidr-blocks/vpc"
-}
-variable "private_subnets_cidr_blocks_parameter" {
-  type    = string
-  default = "/vpc/cidr-blocks/private_subnets"
+variable "program" {
+  description = "The name of the program or team that manages this infrastructure"
+  type        = string
 }
 
-variable "comments_db_password_parameter" {
-  type    = string
-  default = "/app/comments/db_password"
-}
-variable "comments_db_username_parameter" {
-  type    = string
-  default = "/app/comments/db_username"
-}
-variable "comments_db_connection_string_parameter" {
-  type    = string
-  default = "/app/comments/db_connection_string"
+variable "tags" {
+  description = "(Optional) Additional user defined tags for created resources"
+  type        = map(string)
+  default     = {}
 }
 
-# Resolve parameters
+########################################################################
+#  Application Variables
+########################################################################
+variable "application_name" {
+  description = "The name of the application we will host in this infrastructure"
+  type        = string
+}
+
+variable "application_version" {
+  description = "The version of the application to deploy"
+  type        = string
+}
+
+variable "autoscaling_max_capacity" {
+  description = "(Optional) The maximum autoscaling capacity of services"
+  type        = number
+  default     = 4
+}
+
+variable "autoscaling_min_capacity" {
+  description = "(Optional) The minimum autoscaling capacity of services"
+  type        = number
+  default     = 2
+}
+
+variable "service_cpu_units" {
+  description = "(Optional) The amount of cpu units to be allocated for tasks"
+  type        = number
+  default     = 256
+}
+
+variable "service_memory" {
+  description = "(Optional) The amount of memory in MB to be allocated for tasks"
+  type        = number
+  default     = 512
+}
+
+########################################################################
+#  Resolve SSM Parameters
+########################################################################
 data "aws_ssm_parameter" "s3_prefix_list_id" {
-  name = var.s3_prefix_list_id_parameter
+  name = "/${var.environment}/vpc/s3_prefix_list_id"
 }
 data "aws_ssm_parameter" "vpc_id" {
-  name = var.vpc_id_parameter
+  name = "/${var.environment}/vpc/id"
 }
 data "aws_ssm_parameter" "public_subnets" {
-  name = var.public_subnets_parameter
+  name = "/${var.environment}/vpc/public_subnets"
 }
 data "aws_ssm_parameter" "private_subnets" {
-  name = var.private_subnets_parameter
+  name = "/${var.environment}/vpc/private_subnets"
 }
 data "aws_ssm_parameter" "vpc_cidr_block" {
-  name = var.vpc_cidr_block_parameter
+  name = "/${var.environment}/vpc/cidr-blocks/vpc"
 }
 data "aws_ssm_parameter" "private_subnets_cidr_blocks" {
-  name = var.private_subnets_cidr_blocks_parameter
+  name = "/${var.environment}/vpc/cidr-blocks/private_subnets"
 }
 
-data "aws_ssm_parameter" "comments_db_password" {
-  name = var.comments_db_password_parameter
+data "aws_ssm_parameter" "application_db_password" {
+  name = "/${var.environment}/app/${var.application_name}/db_password"
 }
-data "aws_ssm_parameter" "comments_db_username" {
-  name = var.comments_db_username_parameter
+data "aws_ssm_parameter" "application_db_username" {
+  name = "/${var.environment}/app/${var.application_name}/db_username"
 }
-data "aws_ssm_parameter" "comments_db_connection_string" {
-  name = var.comments_db_connection_string_parameter
+data "aws_ssm_parameter" "application_db_connection_string" {
+  name = "/${var.environment}/app/${var.application_name}/db_connection_string"
 }

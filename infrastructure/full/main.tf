@@ -1,11 +1,13 @@
 provider "aws" {
-  skip_region_validation      = true
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
   default_tags {
-    tags = {
-      ChaosEngineeringTeam = true
-    }
+    tags = merge(
+      {
+        Environment = var.environment
+        Program     = var.program
+        Application = var.application_name
+      },
+      var.tags,
+    )
   }
 }
 
@@ -13,21 +15,22 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  full_name = "${var.environment}-${var.application_name}-${basename(path.cwd)}"
-  name      = substr(local.full_name, 0, 18)
+  name = substr(
+    "${var.environment}-${var.program}-${var.application_name}-${basename(path.cwd)}", 0, 18
+  )
 
   account_id = data.aws_caller_identity.current.account_id
   region     = data.aws_region.current.name
 
-  spamcheck_port = 8000
-  api_port       = 8080
+  cpu    = var.service_cpu_units
+  memory = var.service_memory
+
   web_port       = 3000
+  api_port       = 8080
+  spamcheck_port = 8000
 
   spamcheck_prefix = "/spam"
   api_prefix       = "/api"
-
-  cpu    = 256
-  memory = 512
 
   container_egress_rules = {
     egress_vpc_cidr = {
@@ -50,11 +53,12 @@ locals {
 }
 
 
-module "alb_sg" {
-  source = "terraform-aws-modules/security-group/aws"
+module "alb_security_group" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
 
-  name        = "${local.name}-service"
-  description = "Service security group"
+  name        = "${local.name}-alb-sg"
+  description = "Application load balancer security group for ${var.application_name} app"
   vpc_id      = data.aws_ssm_parameter.vpc_id.value
 
   ingress_rules       = ["http-80-tcp"]
@@ -62,14 +66,11 @@ module "alb_sg" {
 
   egress_rules       = ["all-all"]
   egress_cidr_blocks = [data.aws_ssm_parameter.vpc_cidr_block.value]
-
-  tags = {
-    Role = "alb-main"
-  }
 }
 
 module "public_alb" {
-  source = "terraform-aws-modules/alb/aws"
+  source  = "terraform-aws-modules/alb/aws"
+  version = "8.7.0"
 
   name = "${local.name}-public"
 
@@ -78,7 +79,7 @@ module "public_alb" {
 
   vpc_id          = data.aws_ssm_parameter.vpc_id.value
   subnets         = split(",", data.aws_ssm_parameter.public_subnets.value)
-  security_groups = [module.alb_sg.security_group_id]
+  security_groups = [module.alb_security_group.security_group_id]
 
   http_tcp_listeners = [
     {
@@ -90,7 +91,7 @@ module "public_alb" {
 
   target_groups = [
     {
-      name             = "${local.name}-front"
+      name             = "${local.name}-web"
       backend_protocol = "HTTP"
       backend_port     = local.web_port
       target_type      = "ip"
@@ -100,14 +101,11 @@ module "public_alb" {
       }
     },
   ]
-
-  tags = {
-    Role = "alb-public"
-  }
 }
 
 module "internal_alb" {
-  source = "terraform-aws-modules/alb/aws"
+  source  = "terraform-aws-modules/alb/aws"
+  version = "8.7.0"
 
   name = "${local.name}-internal"
 
@@ -116,7 +114,7 @@ module "internal_alb" {
 
   vpc_id          = data.aws_ssm_parameter.vpc_id.value
   subnets         = split(",", data.aws_ssm_parameter.private_subnets.value)
-  security_groups = [module.alb_sg.security_group_id]
+  security_groups = [module.alb_security_group.security_group_id]
 
   http_tcp_listeners = [
     {
@@ -160,7 +158,7 @@ module "internal_alb" {
 
   target_groups = [
     {
-      name             = "${local.name}-comments-api"
+      name             = "${local.name}-api"
       backend_protocol = "HTTP"
       backend_port     = local.api_port
       target_type      = "ip"
@@ -170,7 +168,7 @@ module "internal_alb" {
       }
     },
     {
-      name             = "${local.name}-spam-check"
+      name             = "${local.name}-spamcheck"
       backend_protocol = "HTTP"
       backend_port     = local.spamcheck_port
       target_type      = "ip"
@@ -180,22 +178,20 @@ module "internal_alb" {
       }
     },
   ]
-
-  tags = {
-    Role = "alb-internal"
-  }
 }
 
 module "app_cluster" {
-  source = "terraform-aws-modules/ecs/aws//modules/cluster"
+  source  = "terraform-aws-modules/ecs/aws//modules/cluster"
+  version = "5.2.0"
 
   cluster_name = "${local.name}-cluster"
 }
 
-module "comments_api_service" {
-  source = "terraform-aws-modules/ecs/aws//modules/service"
+module "api_service" {
+  source  = "terraform-aws-modules/ecs/aws//modules/service"
+  version = "5.2.0"
 
-  name        = "comments-api-service"
+  name        = "${var.application_name}-api-service"
   cluster_arn = module.app_cluster.arn
 
   cpu         = local.cpu
@@ -203,9 +199,9 @@ module "comments_api_service" {
   launch_type = "FARGATE"
   subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
 
-  desired_count            = 1
-  autoscaling_min_capacity = 1
-  autoscaling_max_capacity = 3
+  desired_count            = var.autoscaling_min_capacity
+  autoscaling_min_capacity = var.autoscaling_min_capacity
+  autoscaling_max_capacity = var.autoscaling_max_capacity
   autoscaling_policies = {
     "requests" : {
       "policy_type" : "TargetTrackingScaling"
@@ -244,11 +240,12 @@ module "comments_api_service" {
   }
 
   container_definitions = {
-    comments_api = {
+    main = {
+      name      = "${local.name}-api"
       cpu       = local.cpu
       memory    = local.memory
       essential = true
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/middleservice:v1"
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.application_name}-api:${var.application_version}"
       port_mappings = [
         {
           containerPort = local.api_port
@@ -258,9 +255,9 @@ module "comments_api_service" {
       ]
       environment = [
         { "name" : "BACK_URL", "value" : "http://${module.internal_alb.lb_dns_name}${local.spamcheck_prefix}" },
-        { "name" : "SPRING_DATASOURCE_URL", "value" : data.aws_ssm_parameter.comments_db_connection_string.value },
-        { "name" : "SPRING_DATASOURCE_USERNAME", "value" : data.aws_ssm_parameter.comments_db_username.value },
-        { "name" : "SPRING_DATASOURCE_PASSWORD", "value" : data.aws_ssm_parameter.comments_db_password.value },
+        { "name" : "SPRING_DATASOURCE_URL", "value" : data.aws_ssm_parameter.application_db_connection_string.value },
+        { "name" : "SPRING_DATASOURCE_USERNAME", "value" : data.aws_ssm_parameter.application_db_username.value },
+        { "name" : "SPRING_DATASOURCE_PASSWORD", "value" : data.aws_ssm_parameter.application_db_password.value },
         { "name" : "APPLICATION_PATH_BASE", "value" : local.api_prefix },
       ]
       readonly_root_filesystem = false
@@ -270,7 +267,7 @@ module "comments_api_service" {
   load_balancer = {
     service = {
       target_group_arn = element(module.internal_alb.target_group_arns, 0)
-      container_name   = "comments_api"
+      container_name   = "${local.name}-api"
       container_port   = local.api_port
     }
   }
@@ -285,7 +282,7 @@ module "comments_api_service" {
         protocol    = "tcp"
         # Chaos :: Insecure practice should get discovered by alb/ecs-alb-insgress/experiment.yaml
         cidr_blocks = ["0.0.0.0/0"]
-        #source_security_group_id = module.alb_sg.security_group_id
+        #source_security_group_id = module.alb_security_group.security_group_id
       }
     },
     local.container_egress_rules,
@@ -302,10 +299,11 @@ module "comments_api_service" {
   }
 }
 
-module "spam_check_service" {
-  source = "terraform-aws-modules/ecs/aws//modules/service"
+module "spamcheck_service" {
+  source  = "terraform-aws-modules/ecs/aws//modules/service"
+  version = "5.2.0"
 
-  name        = "spam-check-service"
+  name        = "${var.application_name}-spamcheck-service"
   cluster_arn = module.app_cluster.arn
 
   cpu         = local.cpu
@@ -313,16 +311,17 @@ module "spam_check_service" {
   launch_type = "FARGATE"
   subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
 
-  desired_count            = 1
-  autoscaling_min_capacity = 1
-  autoscaling_max_capacity = 3
+  desired_count            = var.autoscaling_min_capacity
+  autoscaling_min_capacity = var.autoscaling_min_capacity
+  autoscaling_max_capacity = var.autoscaling_max_capacity
 
   container_definitions = {
-    spamcheck_service = {
+    main = {
+      name      = "${var.application_name}-spamcheck"
       cpu       = local.cpu
       memory    = local.memory
       essential = true
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/backservice:v1"
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.application_name}-spamcheck:${var.application_version}"
       port_mappings = [
         {
           containerPort = local.spamcheck_port
@@ -340,7 +339,7 @@ module "spam_check_service" {
   load_balancer = {
     service = {
       target_group_arn = element(module.internal_alb.target_group_arns, 1)
-      container_name   = "spamcheck_service"
+      container_name   = "${var.application_name}-spamcheck"
       container_port   = local.spamcheck_port
     }
   }
@@ -355,7 +354,7 @@ module "spam_check_service" {
         protocol    = "tcp"
         # Chaos :: Insecure practice should get discovered by alb/ecs-alb-insgress/experiment.yaml
         cidr_blocks = ["0.0.0.0/0"]
-        #source_security_group_id = module.alb_sg.security_group_id
+        #source_security_group_id = module.alb_security_group.security_group_id
       }
     },
     local.container_egress_rules,
@@ -363,9 +362,10 @@ module "spam_check_service" {
 }
 
 module "web_service" {
-  source = "terraform-aws-modules/ecs/aws//modules/service"
+  source  = "terraform-aws-modules/ecs/aws//modules/service"
+  version = "5.2.0"
 
-  name        = "web-service"
+  name        = "${var.application_name}-web-service"
   cluster_arn = module.app_cluster.arn
 
   cpu         = local.cpu
@@ -373,16 +373,17 @@ module "web_service" {
   launch_type = "FARGATE"
   subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
 
-  desired_count            = 1
-  autoscaling_min_capacity = 1
-  autoscaling_max_capacity = 3
+  desired_count            = var.autoscaling_min_capacity
+  autoscaling_min_capacity = var.autoscaling_min_capacity
+  autoscaling_max_capacity = var.autoscaling_max_capacity
 
   container_definitions = {
-    web_service = {
+    main = {
+      name      = "${var.application_name}-web"
       cpu       = local.cpu
       memory    = local.memory
       essential = true
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/frontservice:v1"
+      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.application_name}-web:${var.application_version}"
       port_mappings = [
         {
           containerPort = local.web_port
@@ -400,7 +401,7 @@ module "web_service" {
   load_balancer = {
     service = {
       target_group_arn = element(module.public_alb.target_group_arns, 0)
-      container_name   = "web_service"
+      container_name   = "${var.application_name}-web"
       container_port   = local.web_port
     }
   }
@@ -415,7 +416,7 @@ module "web_service" {
         protocol    = "tcp"
         # Chaos :: Insecure practice should get discovered by alb/ecs-alb-insgress/experiment.yaml
         cidr_blocks = ["0.0.0.0/0"]
-        #source_security_group_id = module.alb_sg.security_group_id
+        #source_security_group_id = module.alb_security_group.security_group_id
       }
     },
     local.container_egress_rules,

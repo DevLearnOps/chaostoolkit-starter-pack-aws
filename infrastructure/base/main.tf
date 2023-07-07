@@ -1,17 +1,13 @@
 provider "aws" {
-  skip_region_validation      = true
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
   default_tags {
-    tags = {
-      ChaosEngineeringTeam = true
-    }
+    tags = merge(
+      {
+        Environment = var.environment
+        Program     = var.program
+      },
+      var.tags,
+    )
   }
-}
-
-variable "azs" {
-  type    = number
-  default = 2
 }
 
 data "aws_availability_zones" "available" {}
@@ -19,28 +15,26 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
-  name = "chaos-${basename(path.cwd)}"
+  name = "${var.environment}-${var.program}"
 
-  vpc_cidr   = "10.0.0.0/16"
-  azs        = slice(data.aws_availability_zones.available.names, 0, var.azs)
+  azs        = slice(data.aws_availability_zones.available.names, 0, var.number_of_azs)
   account_id = data.aws_caller_identity.current.account_id
   region     = data.aws_region.current.name
-
-  alb_tags = {
-    Name        = local.name
-    Application = "Back"
-  }
 }
 
+########################################################################
+#  AWS VPC
+########################################################################
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
 
-  name = local.name
-  cidr = local.vpc_cidr
+  name = "${local.name}-vpc"
+  cidr = var.vpc_cidr
 
   azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_cidr, 8, k + 4)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k + 4)]
 
   single_nat_gateway = true
   enable_nat_gateway = true
@@ -61,7 +55,8 @@ resource "aws_security_group" "vpc_endpoint_secgroup" {
 }
 
 module "vpc_endpoints" {
-  source = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
+  source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
+  version = "5.0.0"
 
   vpc_id             = module.vpc.vpc_id
   security_group_ids = [aws_security_group.vpc_endpoint_secgroup.id]
@@ -91,17 +86,21 @@ module "vpc_endpoints" {
   }
 }
 
+########################################################################
+#  Create Application Databases
+########################################################################
 locals {
   db_port     = 3306
-  db_username = "comments_user"
-  db_schema   = "COMMENTS_API"
+  db_username = "${var.application_name}_user"
+  db_schema   = "${upper(var.application_name)}_SCHEMA"
 }
 
-module "db_security_group" {
-  source = "terraform-aws-modules/security-group/aws"
+module "app_database_security_group" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
 
-  name        = local.name
-  description = "Complete MySQL example security group"
+  name        = "${local.name}-${var.application_name}-db-secgroup"
+  description = "MySQL security group for ${var.application_name} application database"
   vpc_id      = module.vpc.vpc_id
 
   ingress_with_cidr_blocks = [
@@ -115,20 +114,19 @@ module "db_security_group" {
   ]
 }
 
-module "db_default" {
+module "application_database" {
   source  = "terraform-aws-modules/rds/aws"
   version = "5.9.0"
 
-  identifier = "${local.name}-default"
+  identifier = "${local.name}-${var.application_name}-db"
 
-  # All available versions: http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html#MySQL.Concepts.VersionMgmt
   engine               = "mysql"
   engine_version       = "8.0"
-  family               = "mysql8.0" # DB parameter group
-  major_engine_version = "8.0"      # DB option group
-  instance_class       = "db.t4g.micro"
+  family               = "mysql8.0"
+  major_engine_version = "8.0"
+  instance_class       = var.application_db_instance_class
 
-  allocated_storage = 20
+  allocated_storage = var.application_db_allocated_storage
 
   db_name                = local.db_schema
   username               = local.db_username
@@ -141,7 +139,7 @@ module "db_default" {
   subnet_ids             = module.vpc.private_subnets
 
   db_subnet_group_name   = module.vpc.database_subnet_group
-  vpc_security_group_ids = [module.db_security_group.security_group_id]
+  vpc_security_group_ids = [module.app_database_security_group.security_group_id]
 
   maintenance_window = "Mon:00:00-Mon:03:00"
   backup_window      = "03:00-06:00"
@@ -149,16 +147,19 @@ module "db_default" {
   backup_retention_period = 0
   skip_final_snapshot     = true
   deletion_protection     = false
+
+  tags = {
+    Application = var.application_name,
+  }
 }
 
 module "compute_environment" {
-  source = "../compute-environment"
+  source = "../submodules/compute-environment"
 
-  environment = "live"
-  program     = "chaos"
+  name = local.name
 
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.public_subnets
 
-  notification_topic = "chaos-experiment-result-status"
+  sns_notification_topic_name = var.sns_notification_topic_name
 }

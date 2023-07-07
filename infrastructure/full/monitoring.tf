@@ -1,7 +1,8 @@
 module "avg_response_time_internal_alarm" {
-  source = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+  source  = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+  version = "4.3.0"
 
-  alarm_name          = "internal-alb-avg-target-response-time"
+  alarm_name          = "TargetResponseTime-Avg/${var.environment}/${var.application_name}/internal-alb"
   alarm_description   = "Avg Target Response Time for Internal Alb"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
@@ -19,9 +20,10 @@ module "avg_response_time_internal_alarm" {
 }
 
 module "avg_response_time_user_alarm" {
-  source = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+  source  = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+  version = "4.3.0"
 
-  alarm_name          = "user-facing-alb-avg-target-response-time"
+  alarm_name          = "TargetResponseTime-Avg/${var.environment}/${var.application_name}/public-alb"
   alarm_description   = "Avg Target Response Time for User Facing Alb"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2
@@ -39,9 +41,10 @@ module "avg_response_time_user_alarm" {
 }
 
 module "http_target_5xx_count_internal_alarm" {
-  source = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+  source  = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+  version = "4.3.0"
 
-  alarm_name          = "internal-http-target-5xx-count-alarm"
+  alarm_name          = "Target_5XX_Response-Count/${var.environment}/${var.application_name}/internal-alb"
   alarm_description   = "Avg Target Response Time for Internal Alb"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 2

@@ -12,8 +12,8 @@ contributions:
 
 configuration:
   acceptable_scaling_time: 300
-  expected_container_count: 3
-  cluster_name: "live-comments-full-cluster"
+  expected_container_count: 4
+  cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
 
 steady-state-hypothesis:
