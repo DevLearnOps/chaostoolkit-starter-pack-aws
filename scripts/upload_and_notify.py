@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+import sys
 from pathlib import Path
 from string import Template
 
@@ -23,8 +24,18 @@ def send_notification(template_path, subject, **props):
     with open(template_path, mode="r", encoding="utf-8") as file:
         notification_template = Template(file.read())
 
+    if len(subject) >= 100:
+        print("Truncating notification subject to be less than 100 characters long")
+        subject = f"{subject[:96]}..."
+
     print(f"Sending notification to [{topic_arn}] SNS topic.")
     report = notification_template.substitute(**props)
+
+    if sys.getsizeof(report) > (256 * 1024):
+        print("Truncating notification message to be less than 256 KB in size")
+        max_char = 256 * 1024 / 4
+        report = report[:max_char]
+
     sns_client = boto_session.client("sns")
     sns_client.publish(
         TopicArn=topic_arn,
