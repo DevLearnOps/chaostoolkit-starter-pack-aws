@@ -5,6 +5,20 @@ import subprocess
 import click
 
 
+def _parse_var_overrides(overrides_conf):
+    if not overrides_conf:
+        return {}
+
+    overrides = {}
+
+    for var_string in overrides_conf.split("\n"):
+        if var_string.strip():
+            key, value = var_string.split(":", maxsplit=1)
+            overrides[key.strip()] = value.strip()
+
+    return overrides
+
+
 class ExperimentConfig:
     def __init__(self):
         self.experiment_path = "experiment.yaml"
@@ -14,6 +28,7 @@ class ExperimentConfig:
         self.hypothesis_frequency = None
         self.fail_fast = None
         self.var_files = []
+        self.var_overrides = {}
 
     def read(self, config_file, context: str = None):
         if not os.path.isfile(config_file):
@@ -53,6 +68,10 @@ class ExperimentConfig:
             if file.strip():
                 self.var_files.append(file.strip())
 
+        self.var_overrides = _parse_var_overrides(
+            chaos_conf.get("var_overrides", fallback="")
+        )
+
         return self
 
     def get_options(self):
@@ -83,6 +102,9 @@ class ExperimentConfig:
 
         for var_file in self.var_files:
             opts.extend(["--var-file", var_file])
+
+        for key, value in self.var_overrides.items():
+            opts.extend(["--var", f"{key}={value}"])
 
         return opts
 

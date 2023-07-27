@@ -10,23 +10,17 @@ contributions:
 
 configuration:
   application_url: "https://www.google.com/"
+  duration: 10s
 
 steady-state-hypothesis:
   title: "Verify web server is available"
   probes:
     - type: probe
       name: "site-responsive"
-      tolerance: true
+      tolerance: 200
       provider:
-        func: http
-        module: chaosgrafana.k6.probes
-        type: python
-        arguments:
-          endpoint: ${application_url}
-          method: GET
-          timeout: 5
-          duration: 10s
-          vus: 2
+        type: http
+        url: ${application_url}
 
 method:
   - name: "list-dir-content"
