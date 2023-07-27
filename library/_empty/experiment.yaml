@@ -1,0 +1,37 @@
+title: DevLearnOps Sample Experiment
+description: |-
+  describe me
+
+contributions:
+  security: "none"
+  reliability: "none"
+  scalability: "none"
+
+configuration:
+  application_url: "http://www.google.com"
+
+steady-state-hypothesis:
+  title: "My Hypothesis"
+  probes:
+    - type: probe
+      name: "site-responsive"
+      tolerance: 200
+      provider:
+        type: http
+        url: ${application_url}
+
+method:
+  - name: "dummy-method-action"
+    type: action
+    provider:
+      type: process
+      path: ls
+      arguments: "-la"
+
+rollbacks:
+  - name: "dummy-rollback-action"
+    type: action
+    provider:
+      type: process
+      path: ls
+      arguments: "-la"
