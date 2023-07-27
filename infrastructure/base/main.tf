@@ -36,8 +36,9 @@ module "vpc" {
   private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k)]
   public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k + 4)]
 
+  # cost saving measure. No outbound access for private subnets
   single_nat_gateway = true
-  enable_nat_gateway = true
+  enable_nat_gateway = false
 }
 
 resource "aws_security_group" "vpc_endpoint_secgroup" {

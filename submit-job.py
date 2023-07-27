@@ -29,28 +29,24 @@ def _parse_env(env: list):
     return environment
 
 
-def _submit_job(job_details, environ: list):
-    experiment_path = job_details["path"]
+def _submit_job(job_queue: str, job_definition: str, job_details: dict, environ: list):
+    experiment_conf = job_details["path"]
     cur_time = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    experiment_last_path = experiment_path.split("/")[-1]
+    experiment_last_path = experiment_conf.split("/")[-1]
     name = f"{cur_time}-{experiment_last_path}"
 
     environment = [
         {
-            "name": "EXPERIMENT_PATH",
-            "value": experiment_path,
-        },
-        {
-            "name": "EXPERIMENT_FILE",
-            "value": job_details["experiment_file"],
+            "name": "CHAOS_CONFIG_FILE",
+            "value": experiment_conf,
         },
     ]
     environment.extend(environ)
 
     client.submit_job(
         jobName=name,
-        jobQueue="live-chaos-batch-job-queue",
-        jobDefinition="live-chaos-batch-job-definition",
+        jobQueue=job_queue,
+        jobDefinition=job_definition,
         containerOverrides={
             "environment": environment,
             "resourceRequirements": [
@@ -81,21 +77,32 @@ def _submit_job(job_details, environ: list):
     multiple=True,
     help="Override environment variable for job execution. Format: --env 'KEY=value'",
 )
-@click.argument("experiment-path", type=click.Path(exists=True))
-def cli(vcpu, memory, env, experiment_path):
-    experiment_file = "experiment.yaml"
-    if os.path.isfile(experiment_path):
-        experiment_file = os.path.basename(experiment_path)
-        experiment_path = os.path.dirname(experiment_path)
+@click.option(
+    "--queue",
+    required=True,
+    help="The name of the AWS batch job queue",
+)
+@click.option(
+    "--job-definition",
+    required=True,
+    help="The name of the AWS batch job definition",
+)
+@click.argument("experiment-conf")
+def cli(vcpu, memory, env, queue, job_definition, experiment_conf):
+    # pylint: disable=too-many-arguments
 
     job_details = {
-        "path": experiment_path,
-        "experiment_file": experiment_file,
+        "path": experiment_conf,
         "vcpu": vcpu,
         "memory": memory,
     }
-    _submit_job(job_details=job_details, environ=_parse_env(env))
+    _submit_job(
+        job_queue=queue,
+        job_definition=job_definition,
+        job_details=job_details,
+        environ=_parse_env(env),
+    )
 
 
 if __name__ == "__main__":
-    cli()
+    cli()  # pylint: disable=no-value-for-parameter

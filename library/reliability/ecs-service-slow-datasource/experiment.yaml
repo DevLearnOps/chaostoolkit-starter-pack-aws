@@ -10,6 +10,10 @@ contributions:
   reliability: "high"
   scalability: "medium"
 
+
+########################################################
+#  Controls
+########################################################
 controls:
   - name: "setup-proxy-with-terraform"
     provider:
@@ -17,16 +21,25 @@ controls:
       module: chaosterraform.control
       arguments:
         chdir: ../../stacks/proxy/
+        variables:
+          environment: "live"
+          vpc_id_parameter: "/live/vpc/id"
+          public_subnets_parameter: "/live/vpc/public_subnets"
         outputs:
           toxiproxy_admin_url: "toxiproxy_url"
 
+########################################################
+#  Configuration
+########################################################
 configuration:
   additional_db_latency: 200
   additional_db_latency_jitter: 50
   stress_users: 30
+
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
+
   db_instance_address:
     type: probe
     provider:
@@ -35,6 +48,7 @@ configuration:
       func: get_parameter
       arguments:
         name: "/live/app/comments/db_instance_address"
+
   application_url:
     type: probe
     provider:
@@ -44,6 +58,9 @@ configuration:
       arguments:
         name: "/live/app/comments/web_url"
 
+########################################################
+#  Hypothesis
+########################################################
 steady-state-hypothesis:
   title: "service-should-not-fail"
   probes:
@@ -73,6 +90,9 @@ steady-state-hypothesis:
           duration: "5s"
           vus: 1
 
+########################################################
+#  Method
+########################################################
 method:
   - type: action
     name: "wait-for-toxiproxy-active"
@@ -153,6 +173,9 @@ method:
         environ:
           COMMENTS_URL: "${application_url}"
 
+########################################################
+#  Rollbacks
+########################################################
 rollbacks:
   - type: action
     name: "revert-service-config"

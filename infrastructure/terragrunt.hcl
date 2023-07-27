@@ -18,6 +18,8 @@ inputs = {
   program = "chaos"
   application_name = "comments"
   application_version = "v1"
+  autoscaling_max_capacity = 4
+  autoscaling_min_capacity = 2
   tags = tomap({
     ChaosEngineeringTeam = true
   })

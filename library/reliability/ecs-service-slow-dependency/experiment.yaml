@@ -18,6 +18,10 @@ controls:
       module: chaosterraform.control
       arguments:
         chdir: ../../stacks/proxy/
+        variables:
+          environment: "live"
+          vpc_id_parameter: "/live/vpc/id"
+          public_subnets_parameter: "/live/vpc/public_subnets"
         outputs:
           toxiproxy_admin_url: "toxiproxy_url"
 

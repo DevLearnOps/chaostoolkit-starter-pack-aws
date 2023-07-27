@@ -54,6 +54,7 @@ RUN : \
 #############################################################
 # install Python modules for chaos experiments
 #############################################################
+COPY requirements.txt .
 RUN : \
     && pip install --no-cache-dir -U pip \
     && pip install --no-cache-dir -U \
@@ -61,17 +62,7 @@ RUN : \
         setuptools \
         wheel \
         envsubst \
-        click \
-        marshmallow \
-        jsonpath2 \
-        chaostoolkit \
-        chaostoolkit-lib \
-        chaostoolkit-aws \
-        chaostoolkit-addons \
-        chaostoolkit-toxiproxy \
-        chaostoolkit-terraform==0.0.8 \
-        'git+https://github.com/chaostoolkit-incubator/chaostoolkit-grafana.git@master#egg=chaostoolkit-grafana' \
-        'git+https://github.com/mcastellin/chaostoolkit-aws-attacks.git@main#egg=chaostoolkit-aws-attacks' \
+    && pip install --no-cache-dir -U -r requirements.txt \
     && :
 
 #############################################################
@@ -80,6 +71,7 @@ RUN : \
 WORKDIR /chaos
 COPY . .
 
-RUN chmod +x /chaos/scripts/*.sh
+ENV PYTHONPATH="/chaos/modules/"
 
-CMD ["/chaos/scripts/docker-entrypoint.sh"]
+CMD []
+ENTRYPOINT ["python", "/chaos/start-chaos.py"]

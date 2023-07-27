@@ -1,0 +1,37 @@
+title: Dummy experiment for testing
+description: |-
+  This experiment is designed to run quickly and have no effect on the system.
+  Useful for framework development.
+
+contributions:
+  security: "none"
+  reliability: "none"
+  scalability: "none"
+
+configuration:
+  application_url: "https://www.google.com/"
+
+steady-state-hypothesis:
+  title: "Verify web server is available"
+  probes:
+    - type: probe
+      name: "site-responsive"
+      tolerance: true
+      provider:
+        func: http
+        module: chaosgrafana.k6.probes
+        type: python
+        arguments:
+          endpoint: ${application_url}
+          method: GET
+          timeout: 5
+          duration: 10s
+          vus: 2
+
+method:
+  - name: "list-dir-content"
+    type: action
+    provider:
+      type: process
+      path: ls
+      arguments: "-la"

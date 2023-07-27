@@ -21,20 +21,21 @@ provider "aws" {
 #           Variables              #
 ####################################
 variable "environment" {
-  type    = string
-  default = "live"
+  type        = string
+  description = "The name of the environment"
 }
 variable "vpc_id_parameter" {
-  type    = string
-  default = "/vpc/id"
+  type        = string
+  description = "The SSM parameter name that contains the VPC Id"
 }
 variable "public_subnets_parameter" {
-  type    = string
-  default = "/vpc/public_subnets"
+  type        = string
+  description = "The SSM parameter name that contains the list of public subnet Ids"
 }
 variable "instance_type" {
-  type    = string
-  default = "t3.micro"
+  type        = string
+  description = "The EC2 instance type for the proxy server"
+  default     = "t3.micro"
 }
 
 data "aws_ssm_parameter" "vpc_id" {
