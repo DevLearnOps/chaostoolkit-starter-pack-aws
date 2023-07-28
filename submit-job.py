@@ -32,7 +32,7 @@ def _parse_env(env: list):
 def _submit_job(job_queue: str, job_definition: str, job_details: dict, environ: list):
     experiment_conf = job_details["path"]
     cur_time = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    experiment_last_path = experiment_conf.split("/")[-1]
+    experiment_last_path = experiment_conf.split("/")[-2]
     name = f"{cur_time}-{experiment_last_path}"
 
     environment = [

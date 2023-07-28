@@ -39,16 +39,28 @@ variable "autoscaling_min_capacity" {
   default     = 2
 }
 
-variable "service_cpu_units" {
+variable "generic_service_cpu_units" {
   description = "(Optional) The amount of cpu units to be allocated for tasks"
   type        = number
   default     = 256
 }
 
-variable "service_memory" {
+variable "generic_service_memory" {
   description = "(Optional) The amount of memory in MB to be allocated for tasks"
   type        = number
   default     = 512
+}
+
+variable "java_service_cpu_units" {
+  description = "(Optional) The amount of cpu units to be allocated for tasks running Java applications"
+  type        = number
+  default     = 1024
+}
+
+variable "java_service_memory" {
+  description = "(Optional) The amount of memory in MB to be allocated for tasks running Java applications"
+  type        = number
+  default     = 2048
 }
 
 ########################################################################

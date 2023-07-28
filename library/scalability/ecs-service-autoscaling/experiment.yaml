@@ -11,12 +11,19 @@ contributions:
   reliability: "medium"
   scalability: "high"
 
+########################################################
+#  Configuration
+########################################################
 configuration:
+  environment: "live"
   stress_duration: "10m"
-  stress_users: "10"
-  script_file: "../../load-generation/comments-k6/journey_prod.js"
+  stress_users: "60"
+  service_max_count: 4
+
   cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
+  script_file: "../../load-generation/comments-k6/journey_prod.js"
+
   application_url:
     type: probe
     provider:
@@ -24,8 +31,11 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/web_url"
+        name: "/${environment}/app/comments/web_url"
 
+########################################################
+#  Hypothesis
+########################################################
 steady-state-hypothesis:
   title: "Verify web server is available"
   probes:
@@ -52,20 +62,22 @@ steady-state-hypothesis:
         arguments:
           cluster: ${cluster_name}
           service: ${service_name}
-    - name: "desired-containers-should-be-max"
+    - name: "desired-containers-should-reach-max"
       type: probe
-      tolerance:
-        type: jsonpath
-        path: '$["services"][0]["desiredCount"]'
-        expect: 4
+      tolerance: true
       provider:
         type: python
-        module: chaosaws.ecs.probes
-        func: describe_service
+        module: devlearnops.aws.ecs.probes
+        func: wait_for_service_attribute
         arguments:
           cluster: ${cluster_name}
           service: ${service_name}
+          attribute: "runningCount"
+          expected: ${service_max_count}
 
+########################################################
+#  Method
+########################################################
 method:
   - type: action
     name: "apply-test-load"

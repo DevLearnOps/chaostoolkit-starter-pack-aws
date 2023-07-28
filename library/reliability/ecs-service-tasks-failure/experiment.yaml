@@ -8,10 +8,15 @@ contributions:
   reliability: "high"
   scalability: "medium"
 
+########################################################
+#  Configuration
+########################################################
 configuration:
+  environment: "live"
+  service_name: "comments-web-service"
   cluster_name: "live-chaos-comment-cluster"
-  service_name: "web-service"
   acceptable_downtime: 120
+
   application_url:
     type: probe
     provider:
@@ -19,8 +24,11 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/web_url"
+        name: "/${environment}/app/comments/web_url"
 
+########################################################
+#  Hypothesis
+########################################################
 steady-state-hypothesis:
   title: "service-is-stable"
   probes:
@@ -43,6 +51,9 @@ steady-state-hypothesis:
           cluster: ${cluster_name}
           service: ${service_name}
 
+########################################################
+#  Method
+########################################################
 method:
   - name: "fail-half-containers"
     type: action

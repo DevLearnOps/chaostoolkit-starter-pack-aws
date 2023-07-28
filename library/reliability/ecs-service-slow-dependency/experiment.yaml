@@ -11,6 +11,9 @@ contributions:
   reliability: "high"
   scalability: "medium"
 
+########################################################
+#  Controls
+########################################################
 controls:
   - name: "setup-proxy-with-terraform"
     provider:
@@ -19,17 +22,32 @@ controls:
       arguments:
         chdir: ../../stacks/proxy/
         variables:
-          environment: "live"
-          vpc_id_parameter: "/live/vpc/id"
-          public_subnets_parameter: "/live/vpc/public_subnets"
+          environment:
+            name: environment
+          vpc_id_parameter:
+            name: vpc_id_parameter
+          public_subnets_parameter:
+            name: public_subnets_parameter
         outputs:
           toxiproxy_admin_url: "toxiproxy_url"
 
+########################################################
+#  Configuration
+########################################################
 configuration:
-  stress_users: 30
-  script_file: "../../load-generation/comments-k6/journey_prod.js"
-  cluster_name: "live-chaos-comment-cluster"
+  environment: "live"
+  vpc_id_parameter: "/live/vpc/id"
+  public_subnets_parameter: "/live/vpc/public_subnets"
+
+  warmup_duration: 2m
+  attack_duration: 5m
+  additional_service_latency: 5000
+  additional_service_latency_jitter: 1000 
+  stress_users: 10
+
   service_name: "comments-api-service"
+  cluster_name: "live-chaos-comment-cluster"
+  script_file: "../../load-generation/comments-k6/journey_prod.js"
   proxy_upstream_host:
     type: probe
     provider:
@@ -37,7 +55,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/app/comments/live/internal_alb_dns_name"
+        name: "/app/comments/${environment}/internal_alb_dns_name"
   application_url:
     type: probe
     provider:
@@ -45,8 +63,11 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/web_url"
+        name: "/${environment}/app/comments/web_url"
 
+########################################################
+#  Hypothesis
+########################################################
 steady-state-hypothesis:
   title: "service-should-not-fail"
   probes:
@@ -58,7 +79,7 @@ steady-state-hypothesis:
         module: chaosaws.cloudwatch.probes
         func: get_alarm_state_value
         arguments:
-          alarm_name: "TargetResponseTime-Avg/live/comments/public-alb"
+          alarm_name: "TargetResponseTime-Avg/${environment}/comments/public-alb"
     - type: probe
       name: "site-responsive"
       tolerance: true
@@ -73,6 +94,9 @@ steady-state-hypothesis:
           duration: 5s
           vus: 1
 
+########################################################
+#  Method
+########################################################
 method:
   - type: action
     name: "wait-for-toxiproxy-active"
@@ -120,7 +144,7 @@ method:
       arguments:
         script_path: ${script_file}
         stages:
-          - duration: 5m
+          - duration: ${warmup_duration}
             target: ${stress_users}
         environ:
           COMMENTS_URL: "${application_url}"
@@ -137,8 +161,8 @@ method:
         toxic_type: "latency"
         toxicity: 0.6
         attributes:
-          latency: 5000
-          jitter: 1000
+          latency: ${additional_service_latency}
+          jitter: ${additional_service_latency_jitter}
 
   - type: action
     name: "maintain-user-load"
@@ -149,10 +173,13 @@ method:
       arguments:
         script_path: ${script_file}
         vus: ${stress_users}
-        duration: 10m
+        duration: ${attack_duration}
         environ:
           COMMENTS_URL: "${application_url}"
 
+########################################################
+#  Rollbacks
+########################################################
 rollbacks:
   - type: action
     name: "revert-service-config"

@@ -9,9 +9,17 @@ contributions:
   security: "none"
   reliability: "high"
   scalability: "medium"
-
+########################################################
+#  Configuration
+########################################################
 configuration:
-  stress_users: 30
+
+  environment: "live"
+  fail_az: us-east-1b
+  stress_users: 10
+  warmup_duration: 2m
+  attack_duration: 5m
+
   script_file: "../../load-generation/comments-k6/journey_prod.js"
   cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
@@ -22,8 +30,11 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/web_url"
+        name: "/${environment}/app/comments/web_url"
 
+########################################################
+#  Hypothesis
+########################################################
 steady-state-hypothesis:
   title: "service-should-not-fail"
   probes:
@@ -36,8 +47,8 @@ steady-state-hypothesis:
         func: check_alarm_state_value
         arguments:
           alarm_names:
-            - "Target_5XX_Response-Count/live/comments/internal-alb"
-            - "TargetResponseTime-Avg/live/comments/public-alb"
+            - "Target_5XX_Response-Count/${environment}/comments/internal-alb"
+            - "TargetResponseTime-Avg/${environment}/comments/public-alb"
           expected: ["OK", "INSUFFICIENT_DATA"]
     - type: probe
       name: "site-responsive"
@@ -53,10 +64,12 @@ steady-state-hypothesis:
           duration: 5s
           vus: 1
 
+########################################################
+#  Method
+########################################################
 method:
   - type: action
     name: "apply-user-load-ramp"
-    background: true
     provider:
       func: run_script
       module: chaosgrafana.k6.actions
@@ -64,9 +77,7 @@ method:
       arguments:
         script_path: ${script_file}
         stages:
-          - duration: 5m
-            target: ${stress_users}
-          - duration: 10m
+          - duration: ${warmup_duration}
             target: ${stress_users}
         environ:
           COMMENTS_URL: "${application_url}"
@@ -81,10 +92,24 @@ method:
         cluster: ${cluster_name}
         service: ${service_name}
         availability_zones:
-          - us-east-1b
-    pauses:
-      before: 300
+          - ${fail_az}
 
+  - type: action
+    name: "maintain-user-load"
+    provider:
+      func: run_script
+      module: chaosgrafana.k6.actions
+      type: python
+      arguments:
+        script_path: ${script_file}
+        vus: ${stress_users}
+        duration: ${attack_duration}
+        environ:
+          COMMENTS_URL: "${application_url}"
+
+########################################################
+#  Rollbacks
+########################################################
 rollbacks:
   - type: action
     name: "revert-service-config"

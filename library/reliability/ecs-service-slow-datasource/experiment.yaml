@@ -22,9 +22,12 @@ controls:
       arguments:
         chdir: ../../stacks/proxy/
         variables:
-          environment: "live"
-          vpc_id_parameter: "/live/vpc/id"
-          public_subnets_parameter: "/live/vpc/public_subnets"
+          environment:
+            name: environment
+          vpc_id_parameter:
+            name: vpc_id_parameter
+          public_subnets_parameter:
+            name: public_subnets_parameter
         outputs:
           toxiproxy_admin_url: "toxiproxy_url"
 
@@ -32,13 +35,19 @@ controls:
 #  Configuration
 ########################################################
 configuration:
+  environment: "live"
+  vpc_id_parameter: "/live/vpc/id"
+  public_subnets_parameter: "/live/vpc/public_subnets"
+
+  warmup_duration: 2m
+  attack_duration: 5m
   additional_db_latency: 200
   additional_db_latency_jitter: 50
-  stress_users: 30
+  stress_users: 10
 
-  script_file: "../../load-generation/comments-k6/journey_prod.js"
-  cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
+  cluster_name: "live-chaos-comment-cluster"
+  script_file: "../../load-generation/comments-k6/journey_prod.js"
 
   db_instance_address:
     type: probe
@@ -47,7 +56,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/db_instance_address"
+        name: "/${environment}/app/comments/db_instance_address"
 
   application_url:
     type: probe
@@ -56,7 +65,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/web_url"
+        name: "/${environment}/app/comments/web_url"
 
 ########################################################
 #  Hypothesis
@@ -73,8 +82,8 @@ steady-state-hypothesis:
         func: check_alarm_state_value
         arguments:
           alarm_names:
-            - "Target_5XX_Response-Count/live/comments/internal-alb"
-            - "TargetResponseTime-Avg/live/comments/public-alb"
+            - "Target_5XX_Response-Count/${environment}/comments/internal-alb"
+            - "TargetResponseTime-Avg/${environment}/comments/public-alb"
           expected: ["OK", "INSUFFICIENT_DATA"]
     - type: probe
       name: "site-responsive"
@@ -140,7 +149,7 @@ method:
       arguments:
         script_path: ${script_file}
         stages:
-          - duration: 5m
+          - duration: ${warmup_duration}
             target: ${stress_users}
         environ:
           COMMENTS_URL: "${application_url}"
@@ -169,7 +178,7 @@ method:
       arguments:
         script_path: ${script_file}
         vus: ${stress_users}
-        duration: 10m
+        duration: ${attack_duration}
         environ:
           COMMENTS_URL: "${application_url}"
 

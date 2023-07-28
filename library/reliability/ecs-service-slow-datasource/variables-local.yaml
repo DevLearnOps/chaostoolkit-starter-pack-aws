@@ -1,4 +1,0 @@
-configuration:
-  additional_db_latency: 200
-  additional_db_latency_jitter: 50
-  stress_users: 30

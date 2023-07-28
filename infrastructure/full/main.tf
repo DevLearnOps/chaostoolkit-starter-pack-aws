@@ -22,8 +22,10 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
   region     = data.aws_region.current.name
 
-  cpu    = var.service_cpu_units
-  memory = var.service_memory
+  cpu    = var.generic_service_cpu_units
+  memory = var.generic_service_memory
+  java_cpu    = var.java_service_cpu_units
+  java_memory = var.java_service_memory
 
   web_port       = 3000
   api_port       = 8080
@@ -194,8 +196,8 @@ module "api_service" {
   name        = "${var.application_name}-api-service"
   cluster_arn = module.app_cluster.arn
 
-  cpu         = local.cpu
-  memory      = local.memory
+  cpu         = local.java_cpu
+  memory      = local.java_memory
   launch_type = "FARGATE"
   subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
 
@@ -242,8 +244,8 @@ module "api_service" {
   container_definitions = {
     main = {
       name      = "${local.name}-api"
-      cpu       = local.cpu
-      memory    = local.memory
+      cpu       = local.java_cpu
+      memory    = local.java_memory
       essential = true
       image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.application_name}-api:${var.application_version}"
       port_mappings = [
