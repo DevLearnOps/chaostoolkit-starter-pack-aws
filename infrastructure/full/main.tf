@@ -254,11 +254,11 @@ module "api_service" {
         },
       ]
       environment = [
-        { "name" : "BACK_URL", "value" : "http://${module.internal_alb.lb_dns_name}${local.spamcheck_prefix}" },
         { "name" : "SPRING_DATASOURCE_URL", "value" : data.aws_ssm_parameter.application_db_connection_string.value },
         { "name" : "SPRING_DATASOURCE_USERNAME", "value" : data.aws_ssm_parameter.application_db_username.value },
         { "name" : "SPRING_DATASOURCE_PASSWORD", "value" : data.aws_ssm_parameter.application_db_password.value },
         { "name" : "APPLICATION_PATH_BASE", "value" : local.api_prefix },
+        { "name" : "APPLICATION_SPAMCHECK_URL", "value" : "http://${module.internal_alb.lb_dns_name}${local.spamcheck_prefix}" },
       ]
       readonly_root_filesystem = false
     }
@@ -392,7 +392,7 @@ module "web_service" {
         },
       ]
       environment = [
-        { "name" : "MIDDLE_URL", "value" : "http://${module.internal_alb.lb_dns_name}${local.api_prefix}" },
+        { "name" : "API_URL", "value" : "http://${module.internal_alb.lb_dns_name}${local.api_prefix}" },
       ]
       readonly_root_filesystem = false
     }

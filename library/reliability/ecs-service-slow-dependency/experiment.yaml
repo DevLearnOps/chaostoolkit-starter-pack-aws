@@ -109,7 +109,7 @@ method:
         service: ${service_name}
         container_name: "comments_api"
         environ:
-          BACK_URL: "http://${tf_out__toxiproxy_private_ip}:8000/spam"
+          APPLICATION_SPAMCHECK_URL: "http://${tf_out__toxiproxy_private_ip}:8000/spam"
 
   - type: action
     name: "ramp-up-user-load"

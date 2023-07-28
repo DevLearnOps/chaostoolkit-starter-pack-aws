@@ -1,3 +1,12 @@
+variable "job_definition_environment" {
+  description = "Additional environment variables for the AWS Batch job definition"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
 variable "name" {
   description = "The name for the compute environment resources"
   type        = string

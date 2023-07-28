@@ -152,9 +152,9 @@ resource "aws_batch_job_definition" "this" {
     executionRoleArn = aws_iam_role.job_task_execution.arn
 
     environment = concat(
-      [{ "name" : "CHAOS_CONTEXT", "value" : var.environment }],
       [{ "name" : "JOURNALS_BUCKET", "value" : aws_s3_bucket.this.id }],
       [for item in data.aws_sns_topic.notification : { "name" : "FAILED_EXPERIMENT_TOPIC_ARN", "value" : item.arn }],
+      [for item in var.job_definition_environment : { "name" : item.name, "value" : item.value }],
     )
 
     networkConfiguration = {

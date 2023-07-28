@@ -162,5 +162,10 @@ module "compute_environment" {
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.public_subnets
 
+  job_definition_environment = [{
+    name  = "CHAOS_CONTEXT"
+    value = var.environment
+  }]
+
   sns_notification_topic_name = var.sns_notification_topic_name
 }
