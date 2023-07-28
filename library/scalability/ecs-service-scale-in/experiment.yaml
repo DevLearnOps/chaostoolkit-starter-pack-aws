@@ -11,7 +11,11 @@ contributions:
   reliability: "none"
   scalability: "high"
 
+########################################################
+#  Configuration
+########################################################
 configuration:
+  environment: "live"
   max_desired_count: 4
   original_desired_count: 2
   cluster_name: "live-chaos-comment-cluster"
@@ -23,8 +27,11 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/web_url"
+        name: "/${environment}/app/comments/web_url"
 
+########################################################
+#  Hypothesis
+########################################################
 steady-state-hypothesis:
   title: "Verify web server is available"
   probes:
@@ -55,6 +62,9 @@ steady-state-hypothesis:
           expected: ${original_desired_count}
           timeout: 900 # 15 minutes
 
+########################################################
+#  Method
+########################################################
 method:
   - type: action
     name: set-desired-to-max
