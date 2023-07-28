@@ -13,7 +13,7 @@ def _parse_var_overrides(overrides_conf):
 
     for var_string in overrides_conf.split("\n"):
         if var_string.strip():
-            key, value = var_string.split(":", maxsplit=1)
+            key, value = var_string.split("=", maxsplit=1)
             overrides[key.strip()] = value.strip()
 
     return overrides
