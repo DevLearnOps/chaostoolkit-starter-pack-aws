@@ -61,3 +61,9 @@ variable "sns_notification_topic_name" {
   type        = string
   default     = ""
 }
+
+variable "journals_bucket" {
+  description = "(Optional) The name of the S3 bucket to store experiment journals. If empty, a new bucket is created"
+  type        = string
+  default     = ""
+}

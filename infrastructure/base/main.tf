@@ -36,8 +36,9 @@ module "vpc" {
   private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k)]
   public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k + 4)]
 
+  # cost saving measure. No outbound access for private subnets
   single_nat_gateway = true
-  enable_nat_gateway = true
+  enable_nat_gateway = false
 }
 
 resource "aws_security_group" "vpc_endpoint_secgroup" {
@@ -161,5 +162,11 @@ module "compute_environment" {
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.public_subnets
 
+  job_definition_environment = [{
+    name  = "CHAOS_CONTEXT"
+    value = var.environment
+  }]
+
+  journals_bucket             = var.journals_bucket
   sns_notification_topic_name = var.sns_notification_topic_name
 }

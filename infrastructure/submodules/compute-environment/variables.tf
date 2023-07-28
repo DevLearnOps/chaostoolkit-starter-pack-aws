@@ -1,3 +1,12 @@
+variable "job_definition_environment" {
+  description = "Additional environment variables for the AWS Batch job definition"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
 variable "name" {
   description = "The name for the compute environment resources"
   type        = string
@@ -15,6 +24,12 @@ variable "subnets" {
 
 variable "sns_notification_topic_name" {
   description = "(Optional) The name of the SNS topic to use for job execution notifications"
+  type        = string
+  default     = ""
+}
+
+variable "journals_bucket" {
+  description = "(Optional) The name of the S3 bucket to store experiment journals. If empty, a new bucket is created"
   type        = string
   default     = ""
 }

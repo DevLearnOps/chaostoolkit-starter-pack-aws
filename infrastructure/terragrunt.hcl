@@ -18,8 +18,11 @@ inputs = {
   program = "chaos"
   application_name = "comments"
   application_version = "v1"
+  autoscaling_max_capacity = 4
+  autoscaling_min_capacity = 2
   tags = tomap({
     ChaosEngineeringTeam = true
   })
   sns_notification_topic_name = "chaos-results-notification-topic"
+  journals_bucket = "309172550216-live-chaos-persistent-ctk-journals"
 }

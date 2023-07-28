@@ -5,6 +5,7 @@ tools/
 .flake8
 .gitignore
 .venv
+__pycache__
 Makefile
 Pipfile*
 README.md

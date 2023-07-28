@@ -1,0 +1,6 @@
+##################################################
+#  Global configuration variables
+##################################################
+
+configuration:
+  application_url: https://www.google.com/

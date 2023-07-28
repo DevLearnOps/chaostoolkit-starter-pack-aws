@@ -1,0 +1,31 @@
+title: Dummy experiment for testing
+description: |-
+  This experiment is designed to run quickly and have no effect on the system.
+  Useful for framework development.
+
+contributions:
+  security: "none"
+  reliability: "none"
+  scalability: "none"
+
+configuration:
+  application_url: "https://www.google.com/"
+  duration: 10s
+
+steady-state-hypothesis:
+  title: "Verify web server is available"
+  probes:
+    - type: probe
+      name: "site-responsive"
+      tolerance: 200
+      provider:
+        type: http
+        url: ${application_url}
+
+method:
+  - name: "list-dir-content"
+    type: action
+    provider:
+      type: process
+      path: ls
+      arguments: "-la"
