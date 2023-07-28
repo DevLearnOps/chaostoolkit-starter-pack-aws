@@ -167,5 +167,6 @@ module "compute_environment" {
     value = var.environment
   }]
 
+  journals_bucket             = var.journals_bucket
   sns_notification_topic_name = var.sns_notification_topic_name
 }

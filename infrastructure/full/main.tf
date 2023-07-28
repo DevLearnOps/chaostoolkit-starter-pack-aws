@@ -22,8 +22,8 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
   region     = data.aws_region.current.name
 
-  cpu    = var.generic_service_cpu_units
-  memory = var.generic_service_memory
+  cpu         = var.generic_service_cpu_units
+  memory      = var.generic_service_memory
   java_cpu    = var.java_service_cpu_units
   java_memory = var.java_service_memory
 

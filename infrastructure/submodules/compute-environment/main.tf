@@ -31,6 +31,7 @@ resource "aws_vpc_security_group_egress_rule" "default" {
 #  Journals Reporting S3 Bucket
 ###########################################################################
 resource "aws_s3_bucket" "this" {
+  count         = var.journals_bucket == "" ? 1 : 0
   bucket        = "${local.account_id}-${var.name}-ctk-journals"
   force_destroy = true
 }
@@ -152,7 +153,7 @@ resource "aws_batch_job_definition" "this" {
     executionRoleArn = aws_iam_role.job_task_execution.arn
 
     environment = concat(
-      [{ "name" : "JOURNALS_BUCKET", "value" : aws_s3_bucket.this.id }],
+      [{ "name" : "CHAOS_JOURNALS_BUCKET", "value" : var.journals_bucket == "" ? aws_s3_bucket.this[0].id : var.journals_bucket }],
       [for item in data.aws_sns_topic.notification : { "name" : "FAILED_EXPERIMENT_TOPIC_ARN", "value" : item.arn }],
       [for item in var.job_definition_environment : { "name" : item.name, "value" : item.value }],
     )

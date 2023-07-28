@@ -28,6 +28,12 @@ variable "sns_notification_topic_name" {
   default     = ""
 }
 
+variable "journals_bucket" {
+  description = "(Optional) The name of the S3 bucket to store experiment journals. If empty, a new bucket is created"
+  type        = string
+  default     = ""
+}
+
 variable "max_vcpus" {
   description = "(Optional) The maximum allowed vcpus for the compute environment. Default: 1"
   type        = number

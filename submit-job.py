@@ -87,21 +87,24 @@ def _submit_job(job_queue: str, job_definition: str, job_details: dict, environ:
     required=True,
     help="The name of the AWS batch job definition",
 )
-@click.argument("experiment-conf")
-def cli(vcpu, memory, env, queue, job_definition, experiment_conf):
+@click.argument("experiment-configurations", nargs=-1)
+def cli(vcpu, memory, env, queue, job_definition, experiment_configurations):
     # pylint: disable=too-many-arguments
 
-    job_details = {
-        "path": experiment_conf,
-        "vcpu": vcpu,
-        "memory": memory,
-    }
-    _submit_job(
-        job_queue=queue,
-        job_definition=job_definition,
-        job_details=job_details,
-        environ=_parse_env(env),
-    )
+    for experiment_config_file in list(experiment_configurations):
+        print(f"Submitting experiment with config file: {experiment_config_file}")
+        continue
+        job_details = {
+            "path": experiment_config_file,
+            "vcpu": vcpu,
+            "memory": memory,
+        }
+        _submit_job(
+            job_queue=queue,
+            job_definition=job_definition,
+            job_details=job_details,
+            environ=_parse_env(env),
+        )
 
 
 if __name__ == "__main__":

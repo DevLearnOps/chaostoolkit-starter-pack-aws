@@ -1,8 +1,12 @@
 import configparser
+import json
 import os
 import subprocess
+from datetime import datetime
 
+import boto3
 import click
+from devlearnops import sanitize_name_for_path
 
 
 def _parse_var_overrides(overrides_conf):
@@ -117,6 +121,43 @@ class ExperimentConfig:
         return self.experiment_path
 
 
+def _upload_journal_and_logs(journals_bucket, journal_path, ctk_logs_path) -> str:
+    boto_session = boto3.session.Session()
+
+    if not os.path.isfile(journal_path):
+        print(f"Could not find journal file {journal_path}. Unable to upload to S3.")
+        return None
+
+    with open(journal_path, mode="r", encoding="utf-8") as file:
+        journal_data = json.load(file)
+
+    start_time = datetime.strptime(journal_data.get("start"), "%Y-%m-%dT%H:%M:%S.%f")
+    sanitized_name = sanitize_name_for_path(
+        journal_data.get("experiment", {}).get("title", "undefined"),
+        max_len=50,
+    )
+    upload_path = start_time.strftime("%Y%m%d_%H%M%S") + f"_{sanitized_name}"
+    print(
+        f"Uploading experiment journal and logs to [s3://{journals_bucket}/{upload_path}/]"
+    )
+
+    s3_client = boto_session.client("s3")
+    with open(journal_path, mode="rb") as binary_file:
+        s3_client.upload_fileobj(
+            binary_file,
+            Bucket=journals_bucket,
+            Key=f"{upload_path}/journal.json",
+        )
+    with open(ctk_logs_path, mode="rb") as binary_file:
+        s3_client.upload_fileobj(
+            binary_file,
+            Bucket=journals_bucket,
+            Key=f"{upload_path}/chaostoolkit.log",
+        )
+
+    return upload_path
+
+
 @click.command()
 @click.option(
     "--verbose",
@@ -131,8 +172,13 @@ class ExperimentConfig:
     required=False,
     help="The execution context for the experiment",
 )
+@click.option(
+    "--journals-bucket",
+    required=False,
+    help="The S3 bucket to upload journal files after experiment execution",
+)
 @click.argument("config-file", envvar="CHAOS_CONFIG_FILE", type=click.Path(exists=True))
-def cli(verbose: bool, context: str, config_file: str):
+def cli(verbose: bool, context: str, journals_bucket: str, config_file: str):
     """
     Cli to start a chaos experiment from a configuration definition
     """
@@ -157,6 +203,13 @@ def cli(verbose: bool, context: str, config_file: str):
     )
 
     print(f"\nProcess exited with code: {result.returncode}")
+
+    if journals_bucket:
+        _upload_journal_and_logs(
+            journals_bucket,
+            os.path.join(config.base_path, "journal.json"),
+            os.path.join(config.base_path, "chaostoolkit.log"),
+        )
 
 
 if __name__ == "__main__":
