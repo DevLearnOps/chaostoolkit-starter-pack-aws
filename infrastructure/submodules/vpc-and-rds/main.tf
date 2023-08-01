@@ -88,6 +88,14 @@ module "vpc_endpoints" {
 }
 
 ########################################################################
+#  ECR Pull Through Cache
+########################################################################
+resource "aws_ecr_pull_through_cache_rule" "this" {
+  ecr_repository_prefix = "ecr-public"
+  upstream_registry_url = "public.ecr.aws"
+}
+
+########################################################################
 #  Create Application Databases
 ########################################################################
 locals {
@@ -155,7 +163,7 @@ module "application_database" {
 }
 
 module "compute_environment" {
-  source = "../submodules/compute-environment"
+  source = "../compute-environment"
 
   name = local.name
 
