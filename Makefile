@@ -10,6 +10,8 @@ format:
 	find . -type f -name '*.py' -not -path '*/.venv/*' | xargs isort
 	find . -type f -name '*.py' -not -path '*/.venv/*' | xargs black
 	cd infrastructure/; terragrunt run-all fmt; cd -
+	cd infrastructure/submodules/compute-environment; terraform fmt; cd -
+	cd infrastructure/submodules/ecs-cluster-ec2-provider; terraform fmt; cd -
 
 submit-all:
 	./push_to_ecr.sh

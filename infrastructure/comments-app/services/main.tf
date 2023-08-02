@@ -23,6 +23,10 @@ locals {
   region          = data.aws_region.current.name
   registry_prefix = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/ecr-public/i5e3i8t5"
 
+  # Allow ECS services to be removed without waiting for scaling down to 0
+  ecs_service_force_delete = true
+  tg_deregistration_delay  = 30
+
   cpu         = var.generic_service_cpu_units
   memory      = var.generic_service_memory
   java_cpu    = var.java_service_cpu_units
@@ -113,6 +117,7 @@ module "public_alb" {
         matcher = "200,301,302"
         path    = "/"
       }
+      deregistration_delay = local.tg_deregistration_delay
     },
   ]
 }
@@ -180,6 +185,7 @@ module "internal_alb" {
         matcher = "200,301,302"
         path    = "${local.api_prefix}/health"
       }
+      deregistration_delay = local.tg_deregistration_delay
     },
     {
       name             = "${local.name}-spamcheck"
@@ -190,6 +196,7 @@ module "internal_alb" {
         matcher = "200,301,302"
         path    = "${local.spamcheck_prefix}/health"
       }
+      deregistration_delay = local.tg_deregistration_delay
     },
   ]
 }
@@ -199,6 +206,41 @@ module "app_cluster" {
   version = "5.2.0"
 
   cluster_name = "${local.name}-cluster"
+}
+
+module "app_cluster_ec2" {
+  source = "../..//submodules/ecs-cluster-ec2-provider"
+
+  name    = "${local.name}-ec2"
+  vpc_id  = data.aws_ssm_parameter.vpc_id.value
+  subnets = split(",", data.aws_ssm_parameter.private_subnets.value)
+
+  instance_type = "t3.small"
+  min_size      = 2
+  max_size      = 5
+  log_level     = "debug"
+
+  key_name = var.bastion_key_pair_name
+
+  sg_egress_with_prefix_list_ids = {
+    rule1 = {
+      description    = "Allow outbound access to S3"
+      ip_protocol    = "tcp"
+      from_port      = 443
+      to_port        = 443
+      prefix_list_id = data.aws_ssm_parameter.s3_prefix_list_id.value
+    },
+  }
+
+  sg_egress_with_cidr_blocks = {
+    rule1 = {
+      description = "Allow outbound access within the VPC"
+      ip_protocol = "tcp"
+      from_port   = 0
+      to_port     = 65535
+      cidr_ipv4   = data.aws_ssm_parameter.vpc_cidr_block.value
+    },
+  }
 }
 
 module "api_service" {
@@ -212,6 +254,8 @@ module "api_service" {
   memory      = local.java_memory
   launch_type = "FARGATE"
   subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
+
+  force_delete = local.ecs_service_force_delete
 
   desired_count            = var.autoscaling_min_capacity
   autoscaling_min_capacity = var.autoscaling_min_capacity
@@ -317,12 +361,18 @@ module "spamcheck_service" {
   source  = "terraform-aws-modules/ecs/aws//modules/service"
   version = "5.2.0"
 
+  depends_on = [
+    module.app_cluster_ec2,
+  ]
+
   name        = "${var.application_name}-spamcheck-service"
-  cluster_arn = module.app_cluster_ec2.arn
+  cluster_arn = module.app_cluster_ec2.cluster_arn
 
   cpu        = local.cpu
   memory     = local.memory
   subnet_ids = split(",", data.aws_ssm_parameter.private_subnets.value)
+
+  force_delete = local.ecs_service_force_delete
 
   requires_compatibilities = ["EC2"]
   capacity_provider_strategy = {
@@ -394,6 +444,8 @@ module "web_service" {
   memory      = local.memory
   launch_type = "FARGATE"
   subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
+
+  force_delete = local.ecs_service_force_delete
 
   desired_count            = var.autoscaling_min_capacity
   autoscaling_min_capacity = var.autoscaling_min_capacity
