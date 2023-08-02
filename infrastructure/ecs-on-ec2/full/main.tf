@@ -19,8 +19,9 @@ locals {
     "${var.environment}-${var.program}-${var.application_name}-${basename(path.cwd)}", 0, 18
   )
 
-  account_id = data.aws_caller_identity.current.account_id
-  region     = data.aws_region.current.name
+  account_id      = data.aws_caller_identity.current.account_id
+  region          = data.aws_region.current.name
+  registry_prefix = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/ecr-public/i5e3i8t5"
 
   cpu         = var.generic_service_cpu_units
   memory      = var.generic_service_memory
@@ -182,18 +183,6 @@ module "internal_alb" {
   ]
 }
 
-module "app_cluster" {
-  source  = "terraform-aws-modules/ecs/aws//modules/cluster"
-  version = "5.2.0"
-
-  cluster_name = "${local.name}-cluster"
-
-  default_capacity_provider_use_fargate = false
-  autoscaling_capacity_providers = {
-
-  }
-}
-
 module "api_service" {
   source  = "terraform-aws-modules/ecs/aws//modules/service"
   version = "5.2.0"
@@ -201,10 +190,18 @@ module "api_service" {
   name        = "${var.application_name}-api-service"
   cluster_arn = module.app_cluster.arn
 
-  cpu         = local.java_cpu
-  memory      = local.java_memory
-  launch_type = "FARGATE"
-  subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
+  cpu        = local.java_cpu
+  memory     = local.java_memory
+  subnet_ids = split(",", data.aws_ssm_parameter.private_subnets.value)
+
+  requires_compatibilities = ["EC2"]
+  capacity_provider_strategy = {
+    ondemand = {
+      capacity_provider = module.app_cluster.autoscaling_capacity_providers["ondemand"].name
+      weight            = 1
+      base              = 1
+    }
+  }
 
   desired_count            = var.autoscaling_min_capacity
   autoscaling_min_capacity = var.autoscaling_min_capacity
@@ -252,7 +249,7 @@ module "api_service" {
       cpu       = local.java_cpu
       memory    = local.java_memory
       essential = true
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.application_name}-api:${var.application_version}"
+      image     = "${local.registry_prefix}/${var.application_name}-api:${var.application_version}"
       port_mappings = [
         {
           containerPort = local.api_port
@@ -313,10 +310,18 @@ module "spamcheck_service" {
   name        = "${var.application_name}-spamcheck-service"
   cluster_arn = module.app_cluster.arn
 
-  cpu         = local.cpu
-  memory      = local.memory
-  launch_type = "FARGATE"
-  subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
+  cpu        = local.cpu
+  memory     = local.memory
+  subnet_ids = split(",", data.aws_ssm_parameter.private_subnets.value)
+
+  requires_compatibilities = ["EC2"]
+  capacity_provider_strategy = {
+    ondemand = {
+      capacity_provider = module.app_cluster.autoscaling_capacity_providers["ondemand"].name
+      weight            = 1
+      base              = 1
+    }
+  }
 
   desired_count            = var.autoscaling_min_capacity
   autoscaling_min_capacity = var.autoscaling_min_capacity
@@ -328,7 +333,7 @@ module "spamcheck_service" {
       cpu       = local.cpu
       memory    = local.memory
       essential = true
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.application_name}-spamcheck:${var.application_version}"
+      image     = "${local.registry_prefix}/${var.application_name}-spamcheck:${var.application_version}"
       port_mappings = [
         {
           containerPort = local.spamcheck_port
@@ -375,10 +380,18 @@ module "web_service" {
   name        = "${var.application_name}-web-service"
   cluster_arn = module.app_cluster.arn
 
-  cpu         = local.cpu
-  memory      = local.memory
-  launch_type = "FARGATE"
-  subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
+  cpu        = local.cpu
+  memory     = local.memory
+  subnet_ids = split(",", data.aws_ssm_parameter.private_subnets.value)
+
+  requires_compatibilities = ["EC2"]
+  capacity_provider_strategy = {
+    ondemand = {
+      capacity_provider = module.app_cluster.autoscaling_capacity_providers["ondemand"].name
+      weight            = 1
+      base              = 1
+    }
+  }
 
   desired_count            = var.autoscaling_min_capacity
   autoscaling_min_capacity = var.autoscaling_min_capacity
@@ -390,7 +403,7 @@ module "web_service" {
       cpu       = local.cpu
       memory    = local.memory
       essential = true
-      image     = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/${var.application_name}-web:${var.application_version}"
+      image     = "${local.registry_prefix}/${var.application_name}-web:${var.application_version}"
       port_mappings = [
         {
           containerPort = local.web_port

@@ -84,6 +84,21 @@ module "vpc_endpoints" {
       service_type        = "Interface"
       private_dns_enabled = true
     },
+    ecs = {
+      service             = "ecs"
+      service_type        = "Interface"
+      private_dns_enabled = true
+    },
+    ecs-agent = {
+      service             = "ecs-agent"
+      service_type        = "Interface"
+      private_dns_enabled = true
+    },
+    ecs-telemetry = {
+      service             = "ecs-telemetry"
+      service_type        = "Interface"
+      private_dns_enabled = true
+    },
   }
 }
 
