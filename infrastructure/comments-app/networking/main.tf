@@ -178,7 +178,7 @@ module "application_database" {
 }
 
 module "compute_environment" {
-  source = "../compute-environment"
+  source = "../..//submodules/compute-environment"
 
   name = local.name
 

@@ -1,8 +1,5 @@
-output "frontend_url" {
+output "application_web_url" {
   value = "http://${module.public_alb.lb_dns_name}"
-}
-output "internal_url" {
-  value = "http://${module.internal_alb.lb_dns_name}"
 }
 
 resource "aws_ssm_parameter" "application_web_url" {

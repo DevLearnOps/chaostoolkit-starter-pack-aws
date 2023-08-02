@@ -55,6 +55,17 @@ locals {
   }
 }
 
+resource "null_resource" "sync_containers" {
+  provisioner "local-exec" {
+    command = <<EOF
+    aws ecr get-login-password --region ${local.region} \
+      | docker login --username AWS --password-stdin ${local.account_id}.dkr.ecr.${local.region}.amazonaws.com
+    docker pull ${local.registry_prefix}/${var.application_name}-spamcheck:${var.application_version}
+    docker pull ${local.registry_prefix}/${var.application_name}-web:${var.application_version}
+    docker pull ${local.registry_prefix}/${var.application_name}-api:${var.application_version}
+    EOF
+  }
+}
 
 module "alb_security_group" {
   source  = "terraform-aws-modules/security-group/aws"
@@ -183,6 +194,13 @@ module "internal_alb" {
   ]
 }
 
+module "app_cluster" {
+  source  = "terraform-aws-modules/ecs/aws//modules/cluster"
+  version = "5.2.0"
+
+  cluster_name = "${local.name}-cluster"
+}
+
 module "api_service" {
   source  = "terraform-aws-modules/ecs/aws//modules/service"
   version = "5.2.0"
@@ -190,18 +208,10 @@ module "api_service" {
   name        = "${var.application_name}-api-service"
   cluster_arn = module.app_cluster.arn
 
-  cpu        = local.java_cpu
-  memory     = local.java_memory
-  subnet_ids = split(",", data.aws_ssm_parameter.private_subnets.value)
-
-  requires_compatibilities = ["EC2"]
-  capacity_provider_strategy = {
-    ondemand = {
-      capacity_provider = module.app_cluster.autoscaling_capacity_providers["ondemand"].name
-      weight            = 1
-      base              = 1
-    }
-  }
+  cpu         = local.java_cpu
+  memory      = local.java_memory
+  launch_type = "FARGATE"
+  subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
 
   desired_count            = var.autoscaling_min_capacity
   autoscaling_min_capacity = var.autoscaling_min_capacity
@@ -308,7 +318,7 @@ module "spamcheck_service" {
   version = "5.2.0"
 
   name        = "${var.application_name}-spamcheck-service"
-  cluster_arn = module.app_cluster.arn
+  cluster_arn = module.app_cluster_ec2.arn
 
   cpu        = local.cpu
   memory     = local.memory
@@ -317,7 +327,7 @@ module "spamcheck_service" {
   requires_compatibilities = ["EC2"]
   capacity_provider_strategy = {
     ondemand = {
-      capacity_provider = module.app_cluster.autoscaling_capacity_providers["ondemand"].name
+      capacity_provider = module.app_cluster_ec2.autoscaling_capacity_providers["ondemand"].name
       weight            = 1
       base              = 1
     }
@@ -380,18 +390,10 @@ module "web_service" {
   name        = "${var.application_name}-web-service"
   cluster_arn = module.app_cluster.arn
 
-  cpu        = local.cpu
-  memory     = local.memory
-  subnet_ids = split(",", data.aws_ssm_parameter.private_subnets.value)
-
-  requires_compatibilities = ["EC2"]
-  capacity_provider_strategy = {
-    ondemand = {
-      capacity_provider = module.app_cluster.autoscaling_capacity_providers["ondemand"].name
-      weight            = 1
-      base              = 1
-    }
-  }
+  cpu         = local.cpu
+  memory      = local.memory
+  launch_type = "FARGATE"
+  subnet_ids  = split(",", data.aws_ssm_parameter.private_subnets.value)
 
   desired_count            = var.autoscaling_min_capacity
   autoscaling_min_capacity = var.autoscaling_min_capacity

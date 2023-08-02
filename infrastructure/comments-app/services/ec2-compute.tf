@@ -3,34 +3,40 @@ locals {
     Name    = local.name
     Example = local.name
   }
+  ec2_cluster_instance_type = "t3.small"
+  ec2_cluster_min_size      = 2
+  ec2_cluster_max_size      = 5
+  ec2_cluster_name          = "${local.name}-cluster-ec2"
 }
+
 data "aws_ssm_parameter" "ecs_optimized_ami" {
   name = "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended"
 }
 
-module "autoscaling_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "5.1.0"
-
+resource "aws_security_group" "autoscaling_secgroup" {
   name        = "${local.name}-autoscaling-sg"
   description = "Autoscaling security group for ${var.application_name} app"
   vpc_id      = data.aws_ssm_parameter.vpc_id.value
+}
 
-  ingress_rules       = ["all-all"]
-  ingress_cidr_blocks = ["0.0.0.0/0"]
+resource "aws_vpc_security_group_egress_rule" "autoscaling_sg_egress_default" {
+  security_group_id = aws_security_group.autoscaling_secgroup.id
 
-  egress_rules       = ["all-all"]
-  egress_cidr_blocks = [data.aws_ssm_parameter.vpc_cidr_block.value]
-  egress_with_prefix_list_ids = [
-    {
-      description     = "Allow outbound to S3 service endpoint"
-      from_port       = 443
-      to_port         = 443
-      protocol        = "tcp"
-      prefix_list_ids = data.aws_ssm_parameter.s3_prefix_list_id.value
-    },
-  ]
+  description = "Allow outbound access within the VPC"
+  ip_protocol = "tcp"
+  from_port   = 0
+  to_port     = 65535
+  cidr_ipv4   = data.aws_ssm_parameter.vpc_cidr_block.value
+}
 
+resource "aws_vpc_security_group_egress_rule" "autoscaling_sg_egress_s3" {
+  security_group_id = aws_security_group.autoscaling_secgroup.id
+
+  description    = "Allow outbound to S3 service endpoint"
+  ip_protocol    = "tcp"
+  from_port      = 443
+  to_port        = 443
+  prefix_list_id = data.aws_ssm_parameter.s3_prefix_list_id.value
 }
 
 module "autoscaling" {
@@ -39,13 +45,13 @@ module "autoscaling" {
 
   for_each = {
     ondemand = {
-      instance_type              = "t3.medium"
+      instance_type              = local.ec2_cluster_instance_type
       use_mixed_instances_policy = false
       mixed_instances_policy     = {}
       user_data                  = <<-EOT
         #!/bin/bash
         cat <<'EOF' >> /etc/ecs/ecs.config
-        ECS_CLUSTER=${local.name}-cluster
+        ECS_CLUSTER=${local.ec2_cluster_name}
         ECS_LOGLEVEL=debug
         ECS_CONTAINER_INSTANCE_TAGS=${jsonencode(local.tags)}
         ECS_ENABLE_TASK_IAM_ROLE=true
@@ -58,7 +64,7 @@ module "autoscaling" {
   image_id      = jsondecode(data.aws_ssm_parameter.ecs_optimized_ami.value)["image_id"]
   instance_type = each.value.instance_type
 
-  security_groups                 = [module.autoscaling_sg.security_group_id]
+  security_groups                 = [aws_security_group.autoscaling_secgroup.id]
   user_data                       = base64encode(each.value.user_data)
   ignore_desired_capacity_changes = true
 
@@ -77,9 +83,9 @@ module "autoscaling" {
   # will attach a new ENI in the host system and that EC2 instances have a maximum allowed
   # number of network interfaces.
   # See: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-eni.html#AvailableIpPerENI
-  min_size         = 2
-  max_size         = 6
-  desired_capacity = 2
+  min_size         = local.ec2_cluster_min_size
+  max_size         = local.ec2_cluster_max_size
+  desired_capacity = local.ec2_cluster_min_size
 
   autoscaling_group_tags = {
     AmazonECSManaged = true
@@ -92,11 +98,11 @@ module "autoscaling" {
   mixed_instances_policy     = each.value.mixed_instances_policy
 }
 
-module "app_cluster" {
+module "app_cluster_ec2" {
   source  = "terraform-aws-modules/ecs/aws//modules/cluster"
   version = "5.2.0"
 
-  cluster_name = "${local.name}-cluster"
+  cluster_name = local.ec2_cluster_name
 
   default_capacity_provider_use_fargate = false
   autoscaling_capacity_providers = {
