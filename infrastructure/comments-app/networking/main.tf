@@ -84,7 +84,30 @@ module "vpc_endpoints" {
       service_type        = "Interface"
       private_dns_enabled = true
     },
+    ecs = {
+      service             = "ecs"
+      service_type        = "Interface"
+      private_dns_enabled = true
+    },
+    ecs-agent = {
+      service             = "ecs-agent"
+      service_type        = "Interface"
+      private_dns_enabled = true
+    },
+    ecs-telemetry = {
+      service             = "ecs-telemetry"
+      service_type        = "Interface"
+      private_dns_enabled = true
+    },
   }
+}
+
+########################################################################
+#  ECR Pull Through Cache
+########################################################################
+resource "aws_ecr_pull_through_cache_rule" "this" {
+  ecr_repository_prefix = "ecr-public"
+  upstream_registry_url = "public.ecr.aws"
 }
 
 ########################################################################
@@ -155,7 +178,7 @@ module "application_database" {
 }
 
 module "compute_environment" {
-  source = "../submodules/compute-environment"
+  source = "../..//submodules/compute-environment"
 
   name = local.name
 

@@ -9,9 +9,7 @@ clean:
 format:
 	find . -type f -name '*.py' -not -path '*/.venv/*' | xargs isort
 	find . -type f -name '*.py' -not -path '*/.venv/*' | xargs black
-	terraform -chdir=infrastructure/base/ fmt
-	terraform -chdir=infrastructure/submodules/compute-environment/ fmt
-	terraform -chdir=infrastructure/full/ fmt
+	cd infrastructure/; terragrunt run-all fmt; cd -
 
 submit-all:
 	./push_to_ecr.sh

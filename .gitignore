@@ -162,6 +162,7 @@ cython_debug/
 #Terraform
 terraform.tfstate*
 .terraform*
+.terragrunt-cache
 
 #Chaostoolkit
 journal.json
