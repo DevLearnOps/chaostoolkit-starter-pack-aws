@@ -14,6 +14,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "bastion_key_pair_name" {
+  description = "(Optional) SSH key pair for bastion access into the infrastructure"
+  type        = string
+  default     = ""
+}
+
 ########################################################################
 #  VPC Variables
 ########################################################################

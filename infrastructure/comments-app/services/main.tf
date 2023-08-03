@@ -222,6 +222,16 @@ module "app_cluster_ec2" {
 
   key_name = var.bastion_key_pair_name
 
+  sg_ingress_with_secgroup_id = {
+    rule1 = {
+      description                  = "Allow SSH access from bastion instance"
+      ip_protocol                  = "tcp"
+      from_port                    = 22
+      to_port                      = 22
+      referenced_security_group_id = data.aws_ssm_parameter.nat_bastion_secgroup_id.value
+    },
+  }
+
   sg_egress_with_prefix_list_ids = {
     rule1 = {
       description    = "Allow outbound access to S3"
@@ -238,7 +248,10 @@ module "app_cluster_ec2" {
       ip_protocol = "tcp"
       from_port   = 0
       to_port     = 65535
-      cidr_ipv4   = data.aws_ssm_parameter.vpc_cidr_block.value
+
+      # Allow egress to the internet to install software packages
+      cidr_ipv4 = "0.0.0.0/0"
+      #cidr_ipv4   = data.aws_ssm_parameter.vpc_cidr_block.value
     },
   }
 }

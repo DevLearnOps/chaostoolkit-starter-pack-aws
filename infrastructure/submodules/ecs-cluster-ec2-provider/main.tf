@@ -12,6 +12,18 @@ resource "aws_security_group" "default" {
   vpc_id      = var.vpc_id
 }
 
+resource "aws_vpc_security_group_ingress_rule" "default_secgroup_id" {
+  security_group_id = aws_security_group.default.id
+
+  for_each = var.sg_ingress_with_secgroup_id
+
+  description                  = each.value.description
+  ip_protocol                  = each.value.ip_protocol
+  from_port                    = each.value.from_port
+  to_port                      = each.value.to_port
+  referenced_security_group_id = each.value.referenced_security_group_id
+}
+
 resource "aws_vpc_security_group_egress_rule" "default_cidr_blocks" {
   security_group_id = aws_security_group.default.id
 
@@ -53,6 +65,9 @@ module "autoscaling" {
         ECS_CONTAINER_INSTANCE_TAGS=${jsonencode(var.container_instance_tags)}
         ECS_ENABLE_TASK_IAM_ROLE=true
         EOF
+
+        # make sure Systems Manager Agent is running on instance
+        systemctl enable amazon-ssm-agent --now
       EOT
     }
   }
@@ -71,7 +86,10 @@ module "autoscaling" {
   iam_role_description        = "ECS role for ${var.name}"
   iam_role_policies = {
     AmazonEC2ContainerServiceforEC2Role = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-    AmazonSSMManagedInstanceCore        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+
+    # The AmaxonSSMManagedInstanceCore policy is necessary to allow chaos experiments to run commands
+    # into this instance and simulate faults
+    AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 
   vpc_zone_identifier = var.subnets

@@ -2,6 +2,9 @@
 #  Resolve SSM Parameters
 ########################################################################
 
+data "aws_ssm_parameter" "nat_bastion_secgroup_id" {
+  name = "/${var.environment}/vpc/nat-bastion/security_group_id"
+}
 data "aws_ssm_parameter" "s3_prefix_list_id" {
   name = "/${var.environment}/vpc/s3_prefix_list_id"
 }

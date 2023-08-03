@@ -42,6 +42,18 @@ variable "key_name" {
   default     = ""
 }
 
+variable "sg_ingress_with_secgroup_id" {
+  description = "(Optional) The list of ingress rules for the security group with cidr blocks"
+  type = map(object({
+    description                  = string
+    ip_protocol                  = string
+    from_port                    = number
+    to_port                      = number
+    referenced_security_group_id = string
+  }))
+  default = {}
+}
+
 variable "sg_egress_with_cidr_blocks" {
   description = "(Optional) The list of egress rules for the security group with cidr blocks"
   type = map(object({

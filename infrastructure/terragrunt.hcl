@@ -26,5 +26,6 @@ inputs = {
 
   sns_notification_topic_name = "chaos-results-notification-topic"
   journals_bucket = "309172550216-live-chaos-persistent-ctk-journals"
+
   bastion_key_pair_name = "manuel"
 }

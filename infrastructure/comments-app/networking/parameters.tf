@@ -36,6 +36,11 @@ resource "aws_ssm_parameter" "s3_prefix_list_id" {
   value = module.vpc_endpoints.endpoints.s3.prefix_list_id
   type  = "String"
 }
+resource "aws_ssm_parameter" "nat_bastion_secgroup_id" {
+  name  = "/${var.environment}/vpc/nat-bastion/security_group_id"
+  value = aws_security_group.nat_bastion_secgroup.id
+  type  = "String"
+}
 
 ########################################################################
 #  Application Database Parameters
