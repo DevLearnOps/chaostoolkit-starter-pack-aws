@@ -13,3 +13,7 @@ output "cluster_arn" {
 output "autoscaling_capacity_providers" {
   value = module.cluster.autoscaling_capacity_providers
 }
+
+output "autoscaling" {
+  value = module.autoscaling
+}

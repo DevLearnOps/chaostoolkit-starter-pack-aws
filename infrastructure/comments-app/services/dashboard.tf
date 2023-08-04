@@ -277,7 +277,37 @@ resource "aws_cloudwatch_dashboard" "main_dashboard" {
           "period" : 10,
           "title" : "Comments Spamcheck - Desired vs Running TaskCount"
         }
-      }
+      },
+      {
+        "height" : 3,
+        "width" : 24,
+        "y" : 36,
+        "x" : 0,
+        "type" : "text",
+        "properties" : {
+          "markdown" : "# EC2 Container Instances\n\nCPU + Memory Utilization for container instances providing capacity to ECS services"
+        }
+      },
+      {
+        "type" : "metric",
+        "x" : 0,
+        "y" : 39,
+        "width" : 6,
+        "height" : 6,
+        "properties" : {
+          "metrics" : [
+            ["AWS/EC2", "CPUUtilization", "AutoScalingGroupName", "${module.app_cluster_ec2.autoscaling["ondemand"].autoscaling_group_name}", { "stat" : "Average", "region" : "${local.region}" }],
+            ["...", { "stat" : "Maximum", "region" : "${local.region}" }],
+            ["...", { "region" : "${local.region}" }]
+          ],
+          "view" : "timeSeries",
+          "stacked" : false,
+          "region" : "${local.region}",
+          "stat" : "Minimum",
+          "period" : 10,
+          "title" : "EC2 Ondemand - CPU"
+        }
+      },
     ]
   })
 }
