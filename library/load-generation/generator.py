@@ -436,6 +436,19 @@ COMMENTS = """    "I never realized how important budgeting is until I read this
     "Your recommendations for grilling techniques for different types of vegetables have made me appreciate the natural sweetness and smoky flavors of grilled veggies."
     "Your blog has become my go-to resource for barbecue inspiration. I can always find a recipe that matches my mood and the ingredients I have on hand." """
 
+
+SPAM_COMMENTS = [
+    "SMS SERVICES. for your inclusive text credits, pls goto www.comuk.net login= 3qxj9 unsubscribe with STOP, no extra charge. help 08702840625.COMUK. 220-CM2 9AE",
+    "PRIVATE! Your 2003 Account Statement for 07808247860 shows 800 un-redeemed S. I. M. points. Call 08719899229 Identifier Code: 40411 Expires 06/11/04",
+    "You are awarded a SiPix Digital Camera! call 09061221061 from landline. Delivery within 28days. T Cs Box177. M221BP. 2yr warranty. 150ppm. 16 . p p£3.99",
+    "PRIVATE! Your 2003 Account Statement for shows 800 un-redeemed S.I.M. points. Call 08718738001 Identifier Code: 49557 Expires 26/11/04",
+    "Want explicit SEX in 30 secs? Ring 02073162414 now! Costs 20p/min Gsex POBOX 2667 WC1N 3XX",
+    "ASKED 3MOBILE IF 0870 CHATLINES INCLU IN FREE MINS. INDIA CUST SERVs SED YES. L8ER GOT MEGA BILL. 3 DONT GIV A SHIT. BAILIFF DUE IN DAYS. I O £250 3 WANT £800",
+    "Had your contract mobile 11 Mnths? Latest Motorola, Nokia etc. all FREE! Double Mins & Text on Orange tariffs. TEXT YES for callback, no to remove from records.",
+    "REMINDER FROM O2: To get 2.50 pounds free call credit and details of great offers pls reply 2 this text with your valid name, house no and postcode",
+    "This is the 2nd time we have tried 2 contact u. U have won the £750 Pound prize. 2 claim is easy, call 087187272008 NOW1! Only 10p per minute. BT-national-rate.",
+]
+
 users = []
 for idx, handle in enumerate(HANDLES.split("\n")):
     handle = handle.strip()
@@ -467,12 +480,14 @@ with open("./posts.json", "w", encoding="utf-8") as file:
 
 comments = []
 for _, comment in enumerate(COMMENTS.split("\n")):
-    content = comment.strip().strip('"')
-    comments.append(
-        {
-            "content": content,
-        }
-    )
+    comments.append({"content": comment.strip().strip('"')})
 
 with open("./comments.json", "w", encoding="utf-8") as file:
     json.dump(comments, file)
+
+spam_comments = []
+for comment in SPAM_COMMENTS:
+    spam_comments.append({"content": comment.strip().strip('"')})
+
+with open("./spam_comments.json", "w", encoding="utf-8") as file:
+    json.dump(spam_comments, file)

@@ -93,7 +93,6 @@ def cli(vcpu, memory, env, queue, job_definition, experiment_configurations):
 
     for experiment_config_file in list(experiment_configurations):
         print(f"Submitting experiment with config file: {experiment_config_file}")
-        continue
         job_details = {
             "path": experiment_config_file,
             "vcpu": vcpu,

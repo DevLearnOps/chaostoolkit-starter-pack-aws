@@ -1,0 +1,117 @@
+title: ECS Instance Burn CPU
+description: >-
+  When CPU utilization in ECS container instances run high it should not
+  affect user experience.
+
+contributions:
+  security: "none"
+  reliability: "high"
+  scalability: "medium"
+
+########################################################
+#  Configuration
+########################################################
+configuration:
+  environment: live
+  stress_users: 30
+  stress_duration_seconds: "300"
+  cpu_load_percent: "20"
+
+  script_file: "../../load-generation/comments-k6/spam_comments.js"
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/${environment}/app/comments/web_url"
+
+########################################################
+#  Hypothesis
+########################################################
+steady-state-hypothesis:
+  title: "service-should-not-fail"
+  probes:
+    - type: probe
+      name: "alarms-should-be-in-expected-state"
+      tolerance: true
+      provider:
+        type: python
+        module: devlearnops.aws.cloudwatch.probes
+        func: check_alarm_state_value
+        arguments:
+          alarm_names:
+            - "Target_5XX_Response-Count/${environment}/comments/internal-alb"
+            - "TargetResponseTime-Avg/${environment}/comments/public-alb"
+          expected: ["OK", "INSUFFICIENT_DATA"]
+    - type: probe
+      name: "site-responsive"
+      tolerance: 200
+      provider:
+        type: http
+        url: "${application_url}/users"
+
+########################################################
+#  Method
+########################################################
+method:
+  - name: "burn-instances-cpu"
+    type: action
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.actions
+      func: send_command
+      arguments:
+        document_name: "AWSFIS-Run-CPU-Stress"
+        targets:
+          - Key: "tag:Application"
+            Values:
+              - "comments"
+        targets_percent: 100
+        parameters:
+          DurationSeconds:
+            - ${stress_duration_seconds}
+          CPU:
+            - "0" # default to target all CPUs
+          LoadPercent:
+            - ${cpu_load_percent}
+          InstallDependencies:
+            - "True"
+
+  - name: "spam-load-generation"
+    type: action
+    provider:
+      type: python
+      module: chaosgrafana.k6.actions
+      func: run_script
+      arguments:
+        script_path: ${script_file}
+        stages:
+          - duration: "1m"
+            target: ${stress_users}
+          - duration: "${stress_duration_seconds}s"
+            target: ${stress_users}
+        environ:
+          COMMENTS_URL: "${application_url}"
+          SPAM_BATCH_SIZE: "20"
+
+########################################################
+#  Rollbacks
+########################################################
+rollbacks:
+  - name: "cancel-cpu-stressors"
+    type: action
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.actions
+      func: send_command
+      arguments:
+        document_name: "AWS-RunShellScript"
+        targets:
+          - Key: "tag:Application"
+            Values:
+              - "comments"
+        parameters:
+          commands:
+            - "for pid in $(pidof 'stress-ng'); do kill -9 $pid || true; done"
