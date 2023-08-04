@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 from chaosaws import aws_client
 from chaosaws.ssm.actions import send_command as send_command_wrapped
 from chaosaws.types import AWSResponse
+from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
 from devlearnops import select_items
 from logzero import logger
@@ -18,7 +19,7 @@ def send_command(
     document_version: str = "$DEFAULT",
     parameters: Dict[str, Any] = None,
     timeout_seconds: int = 60,
-    max_concurrency: str = "1",
+    max_concurrency: str = None,
     max_errors: str = "0",
     configuration: Configuration = None,
     secrets: Secrets = None,
@@ -43,7 +44,16 @@ def send_command(
     )
 
     instance_ids = list(map(lambda i: i["InstanceId"], instances))
+    if not instance_ids:
+        raise FailedActivity(
+            "Could not select valid instances from Systems Manager fleet."
+            " Make sure EC2 instances are correctly registered in Systems Manager"
+            " or use use more inclusive [count|percent] attributes."
+        )
     logger.info("Selecting SSM managed instances: %s", str(instance_ids))
+
+    if not max_concurrency:
+        max_concurrency = str(len(instance_ids))
 
     return send_command_wrapped(
         document_name=document_name,

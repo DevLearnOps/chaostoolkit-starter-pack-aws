@@ -1,6 +1,0 @@
-##################################################
-#  Live environment overrides
-##################################################
-
-configuration:
-  application_url: https://devlearnops.com/

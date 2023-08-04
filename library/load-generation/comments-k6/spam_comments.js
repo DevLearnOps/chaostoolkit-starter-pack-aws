@@ -20,6 +20,7 @@ const spam_comments = new SharedArray('spam_comments', function() {
 });
 const host = __ENV.COMMENTS_URL ? __ENV.COMMENTS_URL : 'http://localhost:3000';
 const batch_size = Number(__ENV.SPAM_BATCH_SIZE ? __ENV.SPAM_BATCH_SIZE : '50');
+
 const params = {
     headers: {
         'Content-Type': 'application/json',

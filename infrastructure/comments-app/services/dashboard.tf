@@ -123,6 +123,66 @@ resource "aws_cloudwatch_dashboard" "main_dashboard" {
       },
       {
         "type" : "metric",
+        "x" : 8,
+        "y" : 9,
+        "width" : 8,
+        "height" : 6,
+        "properties" : {
+          "metrics" : [
+            ["AWS/ApplicationELB", "TargetResponseTime", "TargetGroup", "${module.internal_alb.target_group_arn_suffixes[0]}", "LoadBalancer", "${module.internal_alb.lb_arn_suffix}", { "id" : "m1" }],
+            ["...", { "id" : "m2", "stat" : "Maximum" }],
+            ["...", { "id" : "m3", "stat" : "Minimum" }]
+          ],
+          "view" : "timeSeries",
+          "stacked" : false,
+          "region" : "${local.region}",
+          "stat" : "Average",
+          "period" : 10,
+          "title" : "API TargetResponseTime"
+        }
+      },
+      {
+        "type" : "metric",
+        "x" : 16,
+        "y" : 9,
+        "width" : 8,
+        "height" : 6,
+        "properties" : {
+          "metrics" : [
+            ["AWS/ApplicationELB", "TargetResponseTime", "TargetGroup", "${module.internal_alb.target_group_arn_suffixes[1]}", "LoadBalancer", "${module.internal_alb.lb_arn_suffix}", { "id" : "m1" }],
+            ["...", { "id" : "m2", "stat" : "Maximum" }],
+            ["...", { "id" : "m3", "stat" : "Minimum" }]
+          ],
+          "view" : "timeSeries",
+          "stacked" : false,
+          "region" : "${local.region}",
+          "stat" : "Average",
+          "period" : 10,
+          "title" : "Spamcheck TargetResponseTime"
+        }
+      },
+      {
+        "type" : "metric",
+        "x" : 0,
+        "y" : 9,
+        "width" : 8,
+        "height" : 6,
+        "properties" : {
+          "metrics" : [
+            ["AWS/ApplicationELB", "TargetResponseTime", "TargetGroup", "${module.public_alb.target_group_arn_suffixes[0]}", "LoadBalancer", "${module.public_alb.lb_arn_suffix}", { "id" : "m1" }],
+            ["...", { "id" : "m2", "stat" : "Maximum" }],
+            ["...", { "id" : "m3", "stat" : "Minimum" }]
+          ],
+          "view" : "timeSeries",
+          "stacked" : false,
+          "region" : "${local.region}",
+          "stat" : "Average",
+          "period" : 10,
+          "title" : "Web TargetResponseTime"
+        }
+      },
+      {
+        "type" : "metric",
         "x" : 16,
         "y" : 18,
         "width" : 8,

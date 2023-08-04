@@ -4,8 +4,8 @@ description: |-
 
 contributions:
   security: "none"
-  reliability: "none"
-  scalability: "none"
+  reliability: "high"
+  scalability: "medium"
 
 configuration:
   environment: live
