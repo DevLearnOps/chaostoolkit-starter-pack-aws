@@ -1,17 +1,21 @@
-title: DevLearnOps Sample Experiment
-description: |-
-  describe me
+title: ECS Instance Burn CPU
+description: >-
+  When CPU utilization in ECS container instances run high it should not
+  affect user experience.
 
 contributions:
   security: "none"
   reliability: "high"
   scalability: "medium"
 
+########################################################
+#  Configuration
+########################################################
 configuration:
   environment: live
   stress_users: 30
   stress_duration_seconds: "300"
-  cpu_load_percent: "80"
+  cpu_load_percent: "20"
 
   script_file: "../../load-generation/comments-k6/spam_comments.js"
   application_url:
@@ -23,18 +27,35 @@ configuration:
       arguments:
         name: "/${environment}/app/comments/web_url"
 
+########################################################
+#  Hypothesis
+########################################################
 steady-state-hypothesis:
-  title: "My Hypothesis"
+  title: "service-should-not-fail"
   probes:
+    - type: probe
+      name: "alarms-should-be-in-expected-state"
+      tolerance: true
+      provider:
+        type: python
+        module: devlearnops.aws.cloudwatch.probes
+        func: check_alarm_state_value
+        arguments:
+          alarm_names:
+            - "Target_5XX_Response-Count/${environment}/comments/internal-alb"
+            - "TargetResponseTime-Avg/${environment}/comments/public-alb"
+          expected: ["OK", "INSUFFICIENT_DATA"]
     - type: probe
       name: "site-responsive"
       tolerance: 200
       provider:
         type: http
-        url: ${application_url}
+        url: "${application_url}/users"
 
+########################################################
+#  Method
+########################################################
 method:
-
   - name: "burn-instances-cpu"
     type: action
     provider:
@@ -75,8 +96,11 @@ method:
           COMMENTS_URL: "${application_url}"
           SPAM_BATCH_SIZE: "20"
 
+########################################################
+#  Rollbacks
+########################################################
 rollbacks:
-  - name: "kill-stress-processes"
+  - name: "cancel-cpu-stressors"
     type: action
     provider:
       type: python
