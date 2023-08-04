@@ -9,6 +9,7 @@ contributions:
   security: "none"
   reliability: "high"
   scalability: "medium"
+
 ########################################################
 #  Configuration
 ########################################################
@@ -71,9 +72,9 @@ method:
   - type: action
     name: "apply-user-load-ramp"
     provider:
-      func: run_script
-      module: chaosgrafana.k6.actions
       type: python
+      module: chaosgrafana.k6.actions
+      func: run_script
       arguments:
         script_path: ${script_file}
         stages:

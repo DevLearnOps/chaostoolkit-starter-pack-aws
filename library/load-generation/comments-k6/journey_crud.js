@@ -1,12 +1,14 @@
 import http from 'k6/http';
-import { sleep } from 'k6';
+import {
+    sleep
+} from 'k6';
 
-export default function (data) {
+export default function(data) {
     const host = __ENV.COMMENTS_URL ? __ENV.COMMENTS_URL : 'http://localhost:3000';
 
     const params = {
         headers: {
-        'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
         },
     };
 
@@ -29,11 +31,11 @@ export default function (data) {
         handle: '@newuser',
         username: 'New username',
     });
-    
+
     http.put(`${host}/users/${user_id}`, payload_user, params);
 
     http.get(`${host}/users/${user_id}`);
- 
+
     // POSTS
 
     http.get(`${host}/posts`);
@@ -49,14 +51,18 @@ export default function (data) {
 
     http.get(`${host}/posts/${post_id}`);
 
-    let updateData = {id: post_id, url: 'https://www.test.com/permalink', title: 'Updated post title'};
-    
+    let updateData = {
+        id: post_id,
+        url: 'https://www.test.com/permalink',
+        title: 'Updated post title'
+    };
+
     http.put(`${host}/posts/${post_id}`, JSON.stringify(updateData), params);
 
     http.get(`${host}/posts/${post_id}`);
 
     // COMMENTS
-       
+
     http.get(`${host}/comments`);
 
     let payload_spam_comment = JSON.stringify({
@@ -84,7 +90,7 @@ export default function (data) {
     payload_comment = JSON.stringify({
         content: 'Goodbye!',
     });
-    
+
     http.put(`${host}/comments/${comment_id}`, payload_comment, params);
 
     http.get(`${host}/comments/${comment_id}`);
@@ -96,4 +102,4 @@ export default function (data) {
     http.del(`${host}/comments/${comment_id}`);
     http.del(`${host}/posts/${post_id}`);
     http.del(`${host}/users/${user_id}`);
-  }
+}

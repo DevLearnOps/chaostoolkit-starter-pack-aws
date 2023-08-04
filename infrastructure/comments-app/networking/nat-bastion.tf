@@ -102,9 +102,9 @@ resource "aws_route" "nat_route" {
     module.ec2_nat_bastion,
   ]
 
-  for_each = toset(module.vpc.private_route_table_ids)
+  for_each = { for idx, val in module.vpc.private_route_table_ids : idx => val }
 
-  route_table_id         = each.key
+  route_table_id         = each.value
   network_interface_id   = module.ec2_nat_bastion.primary_network_interface_id
   destination_cidr_block = "0.0.0.0/0"
 }

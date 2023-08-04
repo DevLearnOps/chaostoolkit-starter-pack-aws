@@ -14,11 +14,12 @@ const posts = new SharedArray('posts', function() {
     const data = JSON.parse(open('../posts.json'));
     return data;
 });
-const comments = new SharedArray('comments', function() {
-    const data = JSON.parse(open('../comments.json'));
+const spam_comments = new SharedArray('spam_comments', function() {
+    const data = JSON.parse(open('../spam_comments.json'));
     return data;
 });
 const host = __ENV.COMMENTS_URL ? __ENV.COMMENTS_URL : 'http://localhost:3000';
+const batch_size = Number(__ENV.SPAM_BATCH_SIZE ? __ENV.SPAM_BATCH_SIZE : '50');
 const params = {
     headers: {
         'Content-Type': 'application/json',
@@ -28,7 +29,7 @@ const params = {
 export function setup() {
     console.log(`Loaded ${users.length} users from file.`)
     console.log(`Loaded ${posts.length} posts from file.`)
-    console.log(`Loaded ${comments.length} comments from file.`)
+    console.log(`Loaded ${spam_comments.length} spam comments from file.`)
 }
 
 function targetPercent(percent) {
@@ -75,74 +76,23 @@ export default function(data) {
     let post = pickRand(posts)
     let postId = createIfNotExists('posts', post);
 
-    if (targetPercent(15)) {
-        let updateData = {
-            id: postId,
-            url: 'https://www.test.com/permalink',
-            title: 'Updated post title'
-        };
-
-        http.put(`${host}/posts/${postId}`, JSON.stringify(updateData), params);
-    }
-    http.get(`${host}/posts/${postId}`);
-
-
     // Post and update comments
     // Creates and or updates comments according to load target percentages
-    let count = 5;
-    let more = 0;
-    let interestingCommentId = null;
-    while (more >= 0) {
-        let response = http.get(`${host}/posts/${postId}/comments?count=${count}&more=${more}`);
-        if (response.status !== 200) {
-            console.log(`Failed to get comments for post with id=${postId}`);
-            break;
-        } else {
-            let data = JSON.parse(response.body);
-            let randomComment = pickRand(data.comments);
-            interestingCommentId = randomComment !== undefined ? randomComment.id : null;
-            count = data.paginationInfo.count;
-            more = data.paginationInfo.more;
-        }
-    }
 
-    if (targetPercent(40)) {
+    for (let i = 0; i < batch_size; i++) {
         let commentPayload = {
-            content: pickRand(comments).content,
+            content: pickRand(spam_comments).content,
             user: userId,
-            replyTo: targetPercent(60) ? interestingCommentId : null,
+            replyTo: null,
             post: postId
         };
 
         let response = http.post(`${host}/comments/`, JSON.stringify(commentPayload), params);
 
-        if (response.status !== 200) {
-            console.log(`Failed to post comment. Status ${response.status}`);
+        if (response.status !== 403) {
+            console.log(`Spam comment should have been rejected. Received status ${response.status}`);
             return;
         }
-
-        const commentId = JSON.parse(response.body).id;
-
-        http.get(`${host}/comments/${commentId}`);
-
-        if (targetPercent(20)) {
-            commentPayload = JSON.stringify({
-                content: pickRand(comments).content
-            });
-            http.put(`${host}/comments/${commentId}`, JSON.stringify(commentPayload), params);
-
-            http.get(`${host}/comments/${commentId}`);
-        }
-
-        sleep(1);
-        if (targetPercent(20) && commentId !== undefined) {
-            http.del(`${host}/comments/${commentId}`);
-        }
-    }
-
-    sleep(1);
-    if (targetPercent(1) && postId !== undefined) {
-        http.del(`${host}/posts/${postId}`);
     }
 }
 

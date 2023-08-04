@@ -1,20 +1,13 @@
-import math
 from typing import Any, Dict, List
 
 from chaosaws import aws_client
 from chaosaws.ssm.actions import send_command as send_command_wrapped
 from chaosaws.types import AWSResponse
 from chaoslib.types import Configuration, Secrets
+from devlearnops import select_items
 from logzero import logger
 
 __all__ = ["send_command"]
-
-
-def _select_items(items: List, count: int = None, percent: int = 100) -> List:
-    if not count:
-        count = math.ceil(len(items) * (percent / 100))
-
-    return items[: min(count, len(items))]
 
 
 def send_command(
@@ -22,11 +15,11 @@ def send_command(
     targets: List[Dict[str, Any]] = None,
     targets_percent: int = 100,
     targets_count: int = None,
-    document_version: str = None,
+    document_version: str = "$DEFAULT",
     parameters: Dict[str, Any] = None,
-    timeout_seconds: int = None,
-    max_concurrency: str = None,
-    max_errors: str = None,
+    timeout_seconds: int = 60,
+    max_concurrency: str = "1",
+    max_errors: str = "0",
     configuration: Configuration = None,
     secrets: Secrets = None,
 ) -> AWSResponse:
@@ -45,7 +38,7 @@ def send_command(
     results = client.describe_instance_information(
         Filters=targets,
     )
-    instances = _select_items(
+    instances = select_items(
         results["InstanceInformationList"], count=targets_count, percent=targets_percent
     )
 

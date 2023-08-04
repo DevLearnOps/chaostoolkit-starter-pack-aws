@@ -1,0 +1,93 @@
+title: DevLearnOps Sample Experiment
+description: |-
+  describe me
+
+contributions:
+  security: "none"
+  reliability: "none"
+  scalability: "none"
+
+configuration:
+  environment: live
+  stress_users: 30
+  stress_duration_seconds: "300"
+  cpu_load_percent: "80"
+
+  script_file: "../../load-generation/comments-k6/spam_comments.js"
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/${environment}/app/comments/web_url"
+
+steady-state-hypothesis:
+  title: "My Hypothesis"
+  probes:
+    - type: probe
+      name: "site-responsive"
+      tolerance: 200
+      provider:
+        type: http
+        url: ${application_url}
+
+method:
+
+  - name: "burn-instances-cpu"
+    type: action
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.actions
+      func: send_command
+      arguments:
+        document_name: "AWSFIS-Run-CPU-Stress"
+        targets:
+          - Key: "tag:Application"
+            Values:
+              - "comments"
+        targets_percent: 100
+        parameters:
+          DurationSeconds:
+            - ${stress_duration_seconds}
+          CPU:
+            - "0" # default to target all CPUs
+          LoadPercent:
+            - ${cpu_load_percent}
+          InstallDependencies:
+            - "True"
+
+  - name: "spam-load-generation"
+    type: action
+    provider:
+      type: python
+      module: chaosgrafana.k6.actions
+      func: run_script
+      arguments:
+        script_path: ${script_file}
+        stages:
+          - duration: "1m"
+            target: ${stress_users}
+          - duration: "${stress_duration_seconds}s"
+            target: ${stress_users}
+        environ:
+          COMMENTS_URL: "${application_url}"
+          SPAM_BATCH_SIZE: "20"
+
+rollbacks:
+  - name: "kill-stress-processes"
+    type: action
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.actions
+      func: send_command
+      arguments:
+        document_name: "AWS-RunShellScript"
+        targets:
+          - Key: "tag:Application"
+            Values:
+              - "comments"
+        parameters:
+          commands:
+            - "for pid in $(pidof 'stress-ng'); do kill -9 $pid || true; done"
