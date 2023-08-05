@@ -22,6 +22,21 @@ resource "aws_cloudwatch_dashboard" "main_dashboard" {
         }
       },
       {
+        "type" : "alarm",
+        "x" : 8,
+        "y" : 0,
+        "width" : 16,
+        "height" : 6,
+        "properties" : {
+          "title" : "Alarm Status",
+          "alarms" : [
+            "${module.avg_response_time_internal_alarm.cloudwatch_metric_alarm_arn}",
+            "${module.avg_response_time_user_alarm.cloudwatch_metric_alarm_arn}",
+            "${module.http_target_5xx_count_internal_alarm.cloudwatch_metric_alarm_arn}"
+          ]
+        }
+      },
+      {
         "type" : "metric",
         "x" : 0,
         "y" : 18,
