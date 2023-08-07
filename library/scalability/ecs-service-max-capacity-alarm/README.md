@@ -1,4 +1,4 @@
-# Experiment: Service Max Capacity Alerting
+# Experiment: ECS Service Max Capacity Alerting
 
 Simulate an ECS service reaching its max allowed container count.
 The experiment validates that upon reaching its maximum allowed container count, a notification is sent to an SNS topic and successfully received.
@@ -9,14 +9,9 @@ Make sure the registered alarms actually notify our SRE team when a service reac
 
 ## System Requirements
 
-**Additional Software**
-
-* Grafana K6
-
 **Python Packages**
 
 * chaostoolkit-aws
-* chaostoolkit-grafana
 * chaostoolkit-terraform
 
 ## Running the experiment

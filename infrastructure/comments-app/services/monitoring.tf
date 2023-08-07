@@ -60,3 +60,52 @@ module "http_target_5xx_count_internal_alarm" {
     LoadBalancer = module.internal_alb.lb_arn_suffix
   }
 }
+
+module "ecs_service_max_capacity_alarms" {
+  source = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
+
+  for_each = {
+    web = {
+      cluster_name   = module.app_cluster.name
+      service_name   = module.web_service.name
+      max_containers = var.autoscaling_max_capacity
+    },
+    api = {
+      cluster_name   = module.app_cluster.name
+      service_name   = module.api_service.name
+      max_containers = var.autoscaling_max_capacity
+    },
+    spamcheck = {
+      cluster_name   = module.app_cluster_ec2.cluster_name
+      service_name   = module.spamcheck_service.name
+      max_containers = var.autoscaling_max_capacity
+    },
+  }
+
+  alarm_name          = "Service-MaxCapacity/${var.environment}/${var.application_name}/${each.key}"
+  alarm_description   = "Service ${each.value.service_name} reached max container capacity"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  period              = 60
+  unit                = "Count"
+  threshold           = each.value.max_containers
+
+  namespace   = "ECS/ContainerInsights"
+  metric_name = "DesiredTaskCount"
+  statistic   = "Maximum"
+
+  dimensions = {
+    ClusterName = each.value.cluster_name,
+    ServiceName = each.value.service_name,
+  }
+
+  alarm_actions = [aws_sns_topic.sre_updates.arn]
+}
+
+###################################################################
+# SRE Updates Topic
+###################################################################
+resource "aws_sns_topic" "sre_updates" {
+  name         = "${local.name}-sre-updates"
+  display_name = "Urgent Infrastructure Notifications for Site Reliability Engineering Team"
+}

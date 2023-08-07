@@ -11,13 +11,10 @@ contributions:
   scalability: "high"
 
 configuration:
-  stress_duration: "5m"
-  stress_users: "20"
-  script_file: "../../load-generation/comments-k6/journey_prod.js"
+  environment: "live"
   cluster_name: "live-chaos-comment-cluster"
   service_name: "comments-api-service"
-  acceptable_scaling_time: 240
-  desired_tasks_count: 3
+  desired_tasks_count: 4
   application_url:
     type: probe
     provider:
@@ -25,7 +22,7 @@ configuration:
       module: devlearnops.aws.ssm.probes
       func: get_parameter
       arguments:
-        name: "/live/app/comments/web_url"
+        name: "/${environment}/app/comments/web_url"
 
 steady-state-hypothesis:
   title: "service-is-stable"
@@ -43,32 +40,21 @@ steady-state-hypothesis:
           timeout: 5
           duration: 10s
           vus: 2
-    - name: "desired-equals-running"
+    - name: "all-tasks-should-be-running"
       type: probe
       tolerance: true
       provider:
         type: python
-        module: chaosaws.ecs.probes
-        func: are_all_desired_tasks_running
+        module: devlearnops.aws.ecs.probes
+        func: wait_for_service_attribute
         arguments:
           cluster: ${cluster_name}
           service: ${service_name}
+          attribute: "runningCount"
+          expected: ${desired_tasks_count}
+          timeout: 240
 
 method:
-  - type: action
-    name: "apply-test-load"
-    background: true
-    provider:
-      func: run_script
-      module: chaosgrafana.k6.actions
-      type: python
-      arguments:
-        script_path: ${script_file}
-        vus: ${stress_users}
-        duration: ${stress_duration}
-        environ:
-          COMMENTS_URL: "${application_url}"
-
   - name: "update-desired-count"
     type: action
     provider:
@@ -79,5 +65,3 @@ method:
         cluster: ${cluster_name}
         service: ${service_name}
         desired_count: ${desired_tasks_count}
-    pauses:
-      after: ${acceptable_scaling_time}

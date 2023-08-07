@@ -1,6 +1,6 @@
 # Experiment: Service Auto Scale-In
 
-Verify that an ECS service autoscaling policies can scale-in containers effectively to optimise resource
+Verify that an ECS service autoscaling policies can scale-in containers effectively to optimize resource
 utilisation.
 The experiment sets the number of container count to the maximum allowed value and waits for the policy to
 deregister resources until the desired task count matches the initial value.
