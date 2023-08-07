@@ -32,7 +32,10 @@ resource "aws_cloudwatch_dashboard" "main_dashboard" {
           "alarms" : [
             "${module.avg_response_time_internal_alarm.cloudwatch_metric_alarm_arn}",
             "${module.avg_response_time_user_alarm.cloudwatch_metric_alarm_arn}",
-            "${module.http_target_5xx_count_internal_alarm.cloudwatch_metric_alarm_arn}"
+            "${module.http_target_5xx_count_internal_alarm.cloudwatch_metric_alarm_arn}",
+            "${module.ecs_service_max_capacity_alarms["web"].cloudwatch_metric_alarm_arn}",
+            "${module.ecs_service_max_capacity_alarms["api"].cloudwatch_metric_alarm_arn}",
+            "${module.ecs_service_max_capacity_alarms["spamcheck"].cloudwatch_metric_alarm_arn}",
           ]
         }
       },
