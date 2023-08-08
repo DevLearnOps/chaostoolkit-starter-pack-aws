@@ -35,6 +35,7 @@ controls:
 #  Configuration
 ########################################################
 configuration:
+  chaosawsattacks_state_table: "chaos_attacks_states"
   environment: "live"
   vpc_id_parameter: "/live/vpc/id"
   public_subnets_parameter: "/live/vpc/public_subnets"
@@ -136,9 +137,9 @@ method:
       arguments:
         cluster: ${cluster_name}
         service: ${service_name}
-        container_name: "comments_api"
+        container_name: "${environment}-chaos-comment-api"
         environ:
-          SPRING_DATASOURCE_URL: "jdbc:mysql://${tf_out__toxiproxy_private_ip}:3306/COMMENTS_API"
+          SPRING_DATASOURCE_URL: "jdbc:mysql://${tf_out__toxiproxy_private_ip}:3306/COMMENTS_SCHEMA"
 
   - type: action
     name: "ramp-up-user-load"

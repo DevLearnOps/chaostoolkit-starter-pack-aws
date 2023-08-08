@@ -25,7 +25,7 @@ resource "aws_cloudwatch_dashboard" "main_dashboard" {
         "type" : "alarm",
         "x" : 8,
         "y" : 0,
-        "width" : 16,
+        "width" : 8,
         "height" : 6,
         "properties" : {
           "title" : "Alarm Status",

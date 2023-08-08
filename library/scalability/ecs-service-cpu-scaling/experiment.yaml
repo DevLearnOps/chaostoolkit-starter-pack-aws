@@ -11,6 +11,7 @@ contributions:
   scalability: "high"
 
 configuration:
+  chaosawsattacks_state_table: "chaos_attacks_states"
   acceptable_scaling_time: 300
   expected_container_count: 4
   cluster_name: "live-chaos-comment-cluster"

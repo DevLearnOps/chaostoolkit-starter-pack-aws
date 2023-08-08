@@ -14,6 +14,7 @@ contributions:
 #  Configuration
 ########################################################
 configuration:
+  chaosawsattacks_state_table: "chaos_attacks_states"
   environment: "live"
   fail_az: us-east-1b
   stress_users: 10
