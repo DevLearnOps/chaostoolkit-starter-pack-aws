@@ -113,11 +113,8 @@ method:
 ########################################################
 rollbacks:
   - type: action
-    name: "revert-service-config"
+    name: "restore-services"
     provider:
       type: python
       module: chaosawsattacks.ecs.actions
-      func: revert_service_configuration
-      arguments:
-        cluster: ${cluster_name}
-        service: ${service_name}
+      func: restore_services

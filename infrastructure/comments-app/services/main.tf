@@ -67,6 +67,7 @@ resource "null_resource" "sync_containers" {
     docker pull ${local.registry_prefix}/${var.application_name}-spamcheck:${var.application_version}
     docker pull ${local.registry_prefix}/${var.application_name}-web:${var.application_version}
     docker pull ${local.registry_prefix}/${var.application_name}-api:${var.application_version}
+    docker pull ${local.registry_prefix}/ecs-container-hog:latest
     EOF
   }
 }

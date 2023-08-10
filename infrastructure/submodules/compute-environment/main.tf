@@ -123,6 +123,7 @@ resource "aws_iam_role_policy" "job" {
           "ssm:*",
           "ecs:*",
           "cloudwatch:*",
+          "dynamodb:*",
           "iam:PassRole",
         ]
         Effect   = "Allow"

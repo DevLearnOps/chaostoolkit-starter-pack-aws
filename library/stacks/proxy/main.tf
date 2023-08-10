@@ -34,8 +34,13 @@ variable "public_subnets_parameter" {
 }
 variable "instance_type" {
   type        = string
-  description = "The EC2 instance type for the proxy server"
+  description = "(Optional) The EC2 instance type for the proxy server"
   default     = "t3.micro"
+}
+variable "associate_public_ip_address" {
+  type        = bool
+  description = "(Optional) Associate a public IP address to the ToxiProxy instance for remote access. Default: false"
+  default     = false
 }
 
 data "aws_ssm_parameter" "vpc_id" {
@@ -95,7 +100,7 @@ module "ec2_instance" {
   vpc_security_group_ids = [module.ec2_secgroup.security_group_id]
   subnet_id              = element(split(",", data.aws_ssm_parameter.public_subnets.value), 0)
 
-  associate_public_ip_address = true
+  associate_public_ip_address = var.associate_public_ip_address
   user_data                   = <<EOF
 #!/bin/bash
 wget https://github.com/Shopify/toxiproxy/releases/download/v2.5.0/toxiproxy_2.5.0_linux_amd64.rpm
@@ -109,7 +114,7 @@ EOF
 #            Outputs               #
 ####################################
 output "toxiproxy_admin_url" {
-  value = "http://${module.ec2_instance.public_ip}:8474"
+  value = var.associate_public_ip_address ? "http://${module.ec2_instance.public_ip}:8474" : "http://${module.ec2_instance.private_ip}:8474"
 }
 output "toxiproxy_private_ip" {
   value = module.ec2_instance.private_ip

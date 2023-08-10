@@ -28,4 +28,6 @@ inputs = {
   journals_bucket = "309172550216-live-chaos-persistent-ctk-journals"
 
   bastion_key_pair_name = "manuel"
+
+  #deploy_blog_application = true
 }
