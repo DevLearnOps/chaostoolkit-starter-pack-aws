@@ -1,3 +1,17 @@
+#############################################################
+# Building aws-fail-az from source
+#############################################################
+FROM golang:1.21 as builder
+
+WORKDIR /go/src/
+
+RUN : \
+    && git clone https://github.com/mcastellin/aws-fail-az.git \
+    && cd aws-fail-az/ \
+    && CGO_ENABLED=0 go build \
+    && :
+
+
 FROM python:3.11-slim-bullseye
 
 #############################################################
@@ -50,6 +64,11 @@ RUN : \
     && rm -rf /opt/terraform.zip \
     && ln -s -T /opt/terraform /usr/local/bin/terraform \
     && :
+
+#############################################################
+# install aws-fail-az
+#############################################################
+COPY --from=builder /go/src/aws-fail-az/aws-fail-az /usr/local/sbin/
 
 #############################################################
 # install Python modules for chaos experiments

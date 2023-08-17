@@ -122,6 +122,8 @@ resource "aws_iam_role_policy" "job" {
           "ec2:*",
           "ssm:*",
           "ecs:*",
+          "sqs:*",
+          "sns:*",
           "cloudwatch:*",
           "dynamodb:*",
           "iam:PassRole",

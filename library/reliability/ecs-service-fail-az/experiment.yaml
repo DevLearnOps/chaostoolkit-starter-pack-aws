@@ -87,13 +87,14 @@ method:
     name: "fail-aws-availability-zone"
     provider:
       type: python
-      module: chaosawsattacks.ecs.actions
-      func: fail_service_subnets
+      module: chaosawsattacks.az.actions
+      func: fail_azs
       arguments:
-        cluster: ${cluster_name}
-        service: ${service_name}
-        availability_zones:
+        azs:
           - ${fail_az}
+        svc_filters:
+          - type: ecs-service
+            filter: "cluster=${cluster_name};service=${service_name}"
 
   - type: action
     name: "maintain-user-load"
@@ -116,5 +117,5 @@ rollbacks:
     name: "restore-services"
     provider:
       type: python
-      module: chaosawsattacks.ecs.actions
-      func: restore_services
+      module: chaosawsattacks.az.actions
+      func: recover_azs
