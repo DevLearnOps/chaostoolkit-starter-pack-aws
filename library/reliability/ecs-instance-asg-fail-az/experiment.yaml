@@ -1,7 +1,7 @@
-title: ECS Service Fail AZ
+title: ECS Instance Fail Asg AZ
 description: >-
-  This experiment simulates an AZ (Availability Zone) failure for an ECS service
-  using `aws-fail-az`.
+  This test simulates an availability zone failure targeting the ECS cluster
+  provisioned by an Autoscaling Group
 
 contributions:
   security: "none"
@@ -12,16 +12,14 @@ contributions:
 #  Configuration
 ########################################################
 configuration:
-  chaosawsattacks_state_table: "chaos_attacks_states"
   environment: "live"
+  application_name: "comments"
   fail_az: us-east-1b
   stress_users: 10
   warmup_duration: 2m
   attack_duration: 5m
 
   script_file: "../../load-generation/comments-k6/journey_prod.js"
-  cluster_name: "live-chaos-comment-cluster"
-  service_name: "comments-api-service"
   application_url:
     type: probe
     provider:
@@ -91,8 +89,12 @@ method:
         azs:
           - ${fail_az}
         svc_filters:
-          - type: ecs-service
-            filter: "cluster=${cluster_name};service=${service_name}"
+          - type: auto-scaling-group
+            tags:
+              - Name: Environment
+                Value: ${environment}
+              - Name: Application
+                Value: ${application_name}
 
   - type: action
     name: "maintain-user-load"

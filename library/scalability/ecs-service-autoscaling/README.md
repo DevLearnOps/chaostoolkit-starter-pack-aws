@@ -1,4 +1,4 @@
-# Experiment: Service Autoscaling
+# Experiment: ECS Service Autoscaling
 
 This experiment simulates a surge in the number of requests to your service. This can help determine if your autoscaling mechanism responds appropriately and scales out the resources to handle the increased load effectively.
 
@@ -17,5 +17,7 @@ This experiment simulates a surge in the number of requests to your service. Thi
 
 ```bash
 PYTHONPATH=../../modules/ \
-chaos run --hypothesis-strategy after-method-only experiment.yaml
+chaos run \
+    --hypothesis-strategy after-method-only \
+    experiment.yaml
 ```

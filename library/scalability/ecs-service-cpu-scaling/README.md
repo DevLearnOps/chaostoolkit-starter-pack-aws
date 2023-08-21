@@ -1,4 +1,4 @@
-# Experiment: Service Autoscaling CPU Scale-Out
+# Experiment: ECS Service CPU Scaling
 
 Verify that the configured scaling policies for the targeted service can scale-out resources on CPU only.
 The experiment installs a CPU stressor on the service task definition and waits for autoscaling to automatically increase the number of desired tasks to the max.

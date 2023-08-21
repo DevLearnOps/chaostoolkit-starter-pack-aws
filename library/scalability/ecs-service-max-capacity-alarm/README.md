@@ -1,4 +1,4 @@
-# Experiment: ECS Service Max Capacity Alerting
+# Experiment: ECS Service Max Capacity Alarm
 
 Simulate an ECS service reaching its max allowed container count.
 The experiment validates that upon reaching its maximum allowed container count, a notification is sent to an SNS topic and successfully received.

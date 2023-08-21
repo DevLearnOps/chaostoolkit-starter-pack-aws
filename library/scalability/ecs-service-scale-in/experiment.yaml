@@ -1,5 +1,5 @@
-title: ECS service scaling policies should scale in resources for cost optimization
-description: |-
+title: ECS Service Scale-In
+description: >-
   Autoscaling tuning, this experiment verifies the configured autoscaling policies for the
   target service can scale-in tasks within a certain time frame in order to optimize resource
   utilisation. We start by updating the desired container count for the service to its maximum
