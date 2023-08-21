@@ -1,4 +1,4 @@
-# Experiment: Slow ECS Service AZ Failure
+# Experiment: ECS Service AZ Failure
 
 Simulates Availability Zone failure for a running ECS service
 
@@ -11,6 +11,7 @@ TODO
 **Additional Software**
 
 * Grafana K6
+* [AWS Fail AZ][https://github.com/mcastellin/aws-fail-az]
 
 **Python Packages**
 

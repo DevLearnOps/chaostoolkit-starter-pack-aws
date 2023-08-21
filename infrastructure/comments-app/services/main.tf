@@ -21,7 +21,7 @@ locals {
 
   account_id      = data.aws_caller_identity.current.account_id
   region          = data.aws_region.current.name
-  registry_prefix = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/ecr-public/i5e3i8t5"
+  registry_prefix = "${local.account_id}.dkr.ecr.${local.region}.amazonaws.com/ecr-public/devlearnops"
 
   # Allow ECS services to be removed without waiting for scaling down to 0
   ecs_service_force_delete = true

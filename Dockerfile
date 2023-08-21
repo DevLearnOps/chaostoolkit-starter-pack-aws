@@ -1,17 +1,3 @@
-#############################################################
-# Building aws-fail-az from source
-#############################################################
-FROM golang:1.21 as builder
-
-WORKDIR /go/src/
-
-RUN : \
-    && git clone https://github.com/mcastellin/aws-fail-az.git \
-    && cd aws-fail-az/ \
-    && CGO_ENABLED=0 go build \
-    && :
-
-
 FROM python:3.11-slim-bullseye
 
 #############################################################
@@ -45,7 +31,7 @@ RUN : \
     && rm -rf /var/lib/apt/lists/* \
     && export ARCH=$(test $(uname -m) = "x86_64" && echo "amd64" || echo "arm64") \
     && curl -sS -L -o /opt/k6.tgz \
-        "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-$ARCH.tar.gz" \
+        "https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-${ARCH}.tar.gz" \
     && tar xf /opt/k6.tgz -C /opt \
     && rm -rf /opt/k6.tgz \
     && ln -s -T /opt/k6-*/k6 /usr/local/bin/k6 \
@@ -59,16 +45,25 @@ RUN : \
     && set -eux \
     && export ARCH=$(test $(uname -m) = "x86_64" && echo "amd64" || echo "arm64") \
     && curl -sS -L -o /opt/terraform.zip \
-        "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_$ARCH.zip" \
+        "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${ARCH}.zip" \
     && unzip /opt/terraform.zip -d /opt/ \
     && rm -rf /opt/terraform.zip \
     && ln -s -T /opt/terraform /usr/local/bin/terraform \
     && :
 
 #############################################################
-# install aws-fail-az
+# install aws-fail-az binary
 #############################################################
-COPY --from=builder /go/src/aws-fail-az/aws-fail-az /usr/local/sbin/
+ARG AWS_FAIL_AZ_VERSION="0.0.4"
+RUN : \
+    && set -eux \
+    && export ARCH=$(test $(uname -m) = "x86_64" && echo "x86_64" || echo "arm64") \
+    && curl -sS -L -o /opt/aws-fail-az.tar.gz \
+        "https://github.com/mcastellin/aws-fail-az/releases/download/${AWS_FAIL_AZ_VERSION}/aws-fail-az_Linux_${ARCH}.tar.gz" \
+    && tar xf /opt/aws-fail-az.tar.gz -C /opt/ \
+    && rm -rf /opt/aws-fail-az.tar.gz \
+    && ln -s -T /opt/aws-fail-az /usr/local/bin/aws-fail-az \
+    && :
 
 #############################################################
 # install Python modules for chaos experiments

@@ -1,0 +1,121 @@
+title: ECS Instance Fail Asg AZ
+description: >-
+  This test simulates an availability zone failure targeting the ECS cluster
+  provisioned by an Autoscaling Group
+
+contributions:
+  security: "none"
+  reliability: "high"
+  scalability: "medium"
+
+########################################################
+#  Configuration
+########################################################
+configuration:
+  environment: "live"
+  application_name: "comments"
+  fail_az: us-east-1b
+  stress_users: 10
+  warmup_duration: 2m
+  attack_duration: 5m
+
+  script_file: "../../load-generation/comments-k6/journey_prod.js"
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/${environment}/app/comments/web_url"
+
+########################################################
+#  Hypothesis
+########################################################
+steady-state-hypothesis:
+  title: "service-should-not-fail"
+  probes:
+    - type: probe
+      name: "alarms-should-be-in-expected-state"
+      tolerance: true
+      provider:
+        type: python
+        module: devlearnops.aws.cloudwatch.probes
+        func: check_alarm_state_value
+        arguments:
+          alarm_names:
+            - "Target_5XX_Response-Count/${environment}/comments/internal-alb"
+            - "TargetResponseTime-Avg/${environment}/comments/public-alb"
+          expected: ["OK", "INSUFFICIENT_DATA"]
+    - type: probe
+      name: "site-responsive"
+      tolerance: true
+      provider:
+        func: http
+        module: chaosgrafana.k6.probes
+        type: python
+        arguments:
+          endpoint: ${application_url}/users
+          method: GET
+          timeout: 5
+          duration: 5s
+          vus: 1
+
+########################################################
+#  Method
+########################################################
+method:
+  - type: action
+    name: "apply-user-load-ramp"
+    provider:
+      type: python
+      module: chaosgrafana.k6.actions
+      func: run_script
+      arguments:
+        script_path: ${script_file}
+        stages:
+          - duration: ${warmup_duration}
+            target: ${stress_users}
+        environ:
+          COMMENTS_URL: "${application_url}"
+
+  - type: action
+    name: "fail-aws-availability-zone"
+    provider:
+      type: python
+      module: chaosawsattacks.az.actions
+      func: fail_azs
+      arguments:
+        azs:
+          - ${fail_az}
+        svc_filters:
+          - type: auto-scaling-group
+            tags:
+              - Name: Environment
+                Value: ${environment}
+              - Name: Application
+                Value: ${application_name}
+
+  - type: action
+    name: "maintain-user-load"
+    provider:
+      func: run_script
+      module: chaosgrafana.k6.actions
+      type: python
+      arguments:
+        script_path: ${script_file}
+        vus: ${stress_users}
+        duration: ${attack_duration}
+        environ:
+          COMMENTS_URL: "${application_url}"
+
+########################################################
+#  Rollbacks
+########################################################
+rollbacks:
+  - type: action
+    name: "restore-services"
+    provider:
+      type: python
+      module: chaosawsattacks.az.actions
+      func: recover_azs
