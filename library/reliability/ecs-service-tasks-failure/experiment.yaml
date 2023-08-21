@@ -1,5 +1,5 @@
-title: "Service should recover from container failure"
-description: |
+title: ECS Service Task Failure
+description: >-
   A chaos experiment to verify that a service can successfully recover
   from container failure within a certain time frame.
 

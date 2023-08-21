@@ -1,4 +1,4 @@
-title: Service should function normally when a minor dependency is slow to respond
+title: ECS Slow Dependency
 description: |-
   This experiment verifies that when a minor dependency of the targeted service is
   slow to respond it does not have a major impact on users.

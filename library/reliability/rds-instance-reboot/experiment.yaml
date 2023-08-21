@@ -1,6 +1,7 @@
-title: Application should be working after a we shutdown and start the db cluster
-description: |
-  If I restart a db cluster the application should still be working after the restart is completed
+title: RDS Instance Reboot
+description: >-
+  This experiment will restart an RDS instance to verify our application can continue to operate
+  after the DB becomes available again.
 
 contributions:
   security: "low"

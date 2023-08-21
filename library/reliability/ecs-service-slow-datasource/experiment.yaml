@@ -1,9 +1,8 @@
-title: Service should function normally even when its main datasource is under heavy load
-description: |-
-  This experiment verifies that the targeted service can still function normally when
-  its main datasource is experiencing high volume of requests, hence responding with additional
-  latency. The template uses `chaostoolkit-terraform` to temporarily create a ToxiProxy server
-  instance on EC2 and routes database traffic through the proxy to simulate high latency.
+title: ECS Slow Datasource
+description: >-
+  This experiment simulates a slow datasource for a service running on ECS.
+  It uses `chaostoolkit-terraform` to setup a ToxiProxy server on the AWS account,
+  then modifies the service configuration to proxy all database requests through ToxyProxy.
 
 contributions:
   security: "none"

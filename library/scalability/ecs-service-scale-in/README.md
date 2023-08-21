@@ -1,4 +1,4 @@
-# Experiment: Service Auto Scale-In
+# Experiment: ECS Service Scale-In
 
 Verify that an ECS service autoscaling policies can scale-in containers effectively to optimize resource
 utilisation.

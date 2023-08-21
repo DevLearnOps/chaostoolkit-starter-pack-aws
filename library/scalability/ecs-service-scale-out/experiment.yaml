@@ -1,5 +1,5 @@
-title: Service should scale-out resources in the agreed-upon amount of time
-description: |
+title: ECS Service Scale-Out
+description: >-
   This experiment validates the service can scale-out containers quickly when
   additional capacity is required to handle increased load on the application.
   To simulate production-like conditions we use Grafana k6 to generate synthetic

@@ -1,4 +1,4 @@
-# Experiment: Service Scale-Out
+# Experiment: ECS Service Scale-Out
 
 Verify that ECS service autoscaling policies can scale-out tasks under load within a certain time and with no service degradation.
 The experiment manually sets the number of desired containers while the service is under load and waits until the service to complete the scaling operation.

@@ -1,5 +1,5 @@
-title: ECS services should scale-out on CPU only
-description: |-
+title: ECS Service CPU Scaling
+description: >-
   Autoscaling tuning, this experiment verifies the configured CPU scaling policy for the
   targeted service can scale-out tasks based on CPU utilization only. This is important
   to make sure the service can cope with user load even in the event of an unforeseen CPU

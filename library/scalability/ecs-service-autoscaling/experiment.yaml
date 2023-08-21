@@ -1,5 +1,5 @@
-title: When the traffic increases, the targeted service should scale out
-description: |-
+title: ECS Service AutoScaling
+description: >-
   This experiment validates that the service auto-scaling policies can correctly
   scale out and increase the number of containers.
   We use Grafana k6 to generate user traffic and drive load to the infrastructure.
