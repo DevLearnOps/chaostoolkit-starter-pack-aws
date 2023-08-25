@@ -54,7 +54,7 @@ RUN : \
 #############################################################
 # install aws-fail-az binary
 #############################################################
-ARG AWS_FAIL_AZ_VERSION="0.0.4"
+ARG AWS_FAIL_AZ_VERSION="0.0.5"
 RUN : \
     && set -eux \
     && export ARCH=$(test $(uname -m) = "x86_64" && echo "x86_64" || echo "arm64") \

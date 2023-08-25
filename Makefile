@@ -1,4 +1,4 @@
-.PHONY: clean format
+.PHONY: clean format submit-all
 
 clean:
 	find . -type f -name 'chaostoolkit.log' -o -name 'journal.json' \
