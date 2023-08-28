@@ -96,7 +96,7 @@ module "ec2_nat_bastion" {
   user_data = base64encode(local.nat_user_data)
 }
 
-resource "aws_route" "nat_route" {
+resource "aws_route" "private_subnets_nat_route" {
   depends_on = [
     module.vpc,
     module.ec2_nat_bastion,

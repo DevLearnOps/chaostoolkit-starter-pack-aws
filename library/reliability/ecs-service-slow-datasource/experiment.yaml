@@ -27,8 +27,8 @@ controls:
             name: toxiproxy_associate_public_ip
           vpc_id_parameter:
             name: vpc_id_parameter
-          public_subnets_parameter:
-            name: public_subnets_parameter
+          subnets_parameter:
+            name: subnets_parameter
         outputs:
           toxiproxy_admin_url: "toxiproxy_url"
 
@@ -39,7 +39,7 @@ configuration:
   chaosawsattacks_state_table: "chaos_attacks_states"
   environment: "live"
   vpc_id_parameter: "/live/vpc/id"
-  public_subnets_parameter: "/live/vpc/public_subnets"
+  subnets_parameter: "/live/vpc/public_subnets"
   toxiproxy_associate_public_ip: true
 
   warmup_duration: 2m

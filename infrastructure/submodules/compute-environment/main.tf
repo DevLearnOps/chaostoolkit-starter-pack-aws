@@ -124,6 +124,7 @@ resource "aws_iam_role_policy" "job" {
           "ecs:*",
           "sqs:*",
           "sns:*",
+          "rds:*",
           "autoscaling:*",
           "cloudwatch:*",
           "dynamodb:*",
