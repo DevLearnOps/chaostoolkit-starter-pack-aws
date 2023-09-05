@@ -21,7 +21,6 @@ available, though this effect should resolve itself in a short amount of time.
 
 * chaostoolkit-aws
 * chaostoolkit-grafana
-* chaostoolkit-aws-attacks
 
 ## Running the experiment
 

@@ -19,7 +19,6 @@ This test gives engineers the confidence that autoscaling policies and resource 
 * chaostoolkit-aws
 * chaostoolkit-grafana
 * chaostoolkit-terraform
-* chaostoolkit-aws-attacks
 
 ## Running the experiment
 

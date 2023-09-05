@@ -37,7 +37,6 @@ controls:
 #  Configuration
 ########################################################
 configuration:
-  chaosawsattacks_state_table: "chaos_attacks_states"
   environment: "live"
   vpc_id_parameter: "/live/vpc/id"
   subnets_parameter: "/live/vpc/public_subnets"
@@ -130,7 +129,7 @@ method:
     name: "route-traffic-to-toxiproxy"
     provider:
       type: python
-      module: chaosawsattacks.ecs.actions
+      module: devlearnops.aws.ecs.actions
       func: update_service_configuration
       arguments:
         cluster: ${cluster_name}
@@ -189,7 +188,7 @@ rollbacks:
     name: "restore-services"
     provider:
       type: python
-      module: chaosawsattacks.ecs.actions
+      module: devlearnops.aws.ecs.actions
       func: restore_services
   - type: action
     name: "delete-toxics"

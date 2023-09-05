@@ -9,4 +9,3 @@ chaostoolkit-addons==0.8.6
 chaostoolkit-terraform==0.0.9
 chaostoolkit-toxiproxy==0.3.1
 git+https://github.com/chaostoolkit-incubator/chaostoolkit-grafana.git@master#egg=chaostoolkit-grafana
-git+https://github.com/mcastellin/chaostoolkit-aws-attacks.git@main#egg=chaostoolkit-aws-attacks
