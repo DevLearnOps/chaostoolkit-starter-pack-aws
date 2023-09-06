@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 from datetime import datetime
+from signal import SIGINT, Signals, signal
 
 import boto3
 import click
@@ -21,6 +22,14 @@ def _parse_var_overrides(overrides_conf):
             overrides[key.strip()] = value.strip()
 
     return overrides
+
+
+def void_handler(sig, *args):
+    """
+    An empty signal handler to let the ChaosToolkit subprocess handle the
+    exit signal
+    """
+    print(f"Received signal {Signals(sig).name}.")
 
 
 class ExperimentConfig:
@@ -194,15 +203,19 @@ def cli(verbose: bool, context: str, journals_bucket: str, config_file: str):
     command.append(config.get_experiment_path())
     print(f"> {' '.join(command)}")
 
-    result = subprocess.run(
+    with subprocess.Popen(
         command,
         cwd=config.base_path,
-        shell=False,
-        capture_output=False,
-        check=False,
-    )
+        stdout=None,
+        stdin=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    ) as process:
+        signal(SIGINT, void_handler)
 
-    print(f"\nProcess exited with code: {result.returncode}")
+        process.communicate()
+        return_code = process.returncode
+
+    print(f"\nProcess exited with code: {return_code}")
 
     if journals_bucket:
         _upload_journal_and_logs(
