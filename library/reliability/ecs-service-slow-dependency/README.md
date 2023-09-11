@@ -17,7 +17,6 @@ When a minor downstream dependency of a service runs with increased latency this
 * chaostoolkit-aws
 * chaostoolkit-grafana
 * chaostoolkit-terraform
-* chaostoolkit-aws-attacks
 
 ## Running the experiment
 

@@ -83,12 +83,12 @@ method:
     name: "fail-aws-availability-zone"
     provider:
       type: python
-      module: chaosawsattacks.az.actions
+      module: devlearnops.aws.az.actions
       func: fail_azs
       arguments:
         azs:
           - ${fail_az}
-        svc_filters:
+        targets:
           - type: auto-scaling-group
             tags:
               - Name: Environment
@@ -117,5 +117,5 @@ rollbacks:
     name: "restore-services"
     provider:
       type: python
-      module: chaosawsattacks.az.actions
+      module: devlearnops.aws.az.actions
       func: recover_azs

@@ -31,6 +31,8 @@ jobs:
           aws-region: us-east-1
 
       - name: destroy-infrastructure
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
           cd infrastructure/
           terragrunt run-all init --terragrunt-non-interactive

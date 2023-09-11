@@ -13,7 +13,6 @@ A sudden CPU spike can have many causes that are unrelated to users' traffic: th
 **Python Packages**
 
 * chaostoolkit-aws
-* chaostoolkit-aws-attacks
 
 ## Running the experiment
 

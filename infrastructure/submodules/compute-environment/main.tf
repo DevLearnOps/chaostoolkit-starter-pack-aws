@@ -124,6 +124,7 @@ resource "aws_iam_role_policy" "job" {
           "ecs:*",
           "sqs:*",
           "sns:*",
+          "rds:*",
           "autoscaling:*",
           "cloudwatch:*",
           "dynamodb:*",
@@ -158,7 +159,7 @@ resource "aws_batch_job_definition" "this" {
 
     environment = concat(
       [{ "name" : "CHAOS_JOURNALS_BUCKET", "value" : var.journals_bucket == "" ? aws_s3_bucket.this[0].id : var.journals_bucket }],
-      [for item in data.aws_sns_topic.notification : { "name" : "FAILED_EXPERIMENT_TOPIC_ARN", "value" : item.arn }],
+      [for item in data.aws_sns_topic.notification : { "name" : "EXPERIMENT_RESULTS_TOPIC_ARN", "value" : item.arn }],
       [for item in var.job_definition_environment : { "name" : item.name, "value" : item.value }],
     )
 

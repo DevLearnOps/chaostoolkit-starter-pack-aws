@@ -40,7 +40,7 @@ RUN : \
 #############################################################
 # install terraform binary
 #############################################################
-ARG TERRAFORM_VERSION="1.5.2"
+ARG TERRAFORM_VERSION="1.5.5"
 RUN : \
     && set -eux \
     && export ARCH=$(test $(uname -m) = "x86_64" && echo "amd64" || echo "arm64") \
@@ -54,7 +54,7 @@ RUN : \
 #############################################################
 # install aws-fail-az binary
 #############################################################
-ARG AWS_FAIL_AZ_VERSION="0.0.5"
+ARG AWS_FAIL_AZ_VERSION="0.0.6"
 RUN : \
     && set -eux \
     && export ARCH=$(test $(uname -m) = "x86_64" && echo "x86_64" || echo "arm64") \

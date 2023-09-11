@@ -12,7 +12,6 @@ contributions:
 #  Configuration
 ########################################################
 configuration:
-  chaosawsattacks_state_table: "chaos_attacks_states"
   environment: "live"
   fail_az: us-east-1b
   stress_users: 10
@@ -85,12 +84,12 @@ method:
     name: "fail-aws-availability-zone"
     provider:
       type: python
-      module: chaosawsattacks.az.actions
+      module: devlearnops.aws.az.actions
       func: fail_azs
       arguments:
         azs:
           - ${fail_az}
-        svc_filters:
+        targets:
           - type: ecs-service
             filter: "cluster=${cluster_name};service=${service_name}"
 
@@ -115,5 +114,5 @@ rollbacks:
     name: "restore-services"
     provider:
       type: python
-      module: chaosawsattacks.az.actions
+      module: devlearnops.aws.az.actions
       func: recover_azs

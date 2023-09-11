@@ -28,9 +28,9 @@ variable "vpc_id_parameter" {
   type        = string
   description = "The SSM parameter name that contains the VPC Id"
 }
-variable "public_subnets_parameter" {
+variable "subnets_parameter" {
   type        = string
-  description = "The SSM parameter name that contains the list of public subnet Ids"
+  description = "The SSM parameter name that contains the list of subnet Ids"
 }
 variable "instance_type" {
   type        = string
@@ -46,8 +46,8 @@ variable "associate_public_ip_address" {
 data "aws_ssm_parameter" "vpc_id" {
   name = var.vpc_id_parameter
 }
-data "aws_ssm_parameter" "public_subnets" {
-  name = var.public_subnets_parameter
+data "aws_ssm_parameter" "subnets" {
+  name = var.subnets_parameter
 }
 
 ####################################
@@ -98,7 +98,7 @@ module "ec2_instance" {
   instance_type          = var.instance_type
   monitoring             = true
   vpc_security_group_ids = [module.ec2_secgroup.security_group_id]
-  subnet_id              = element(split(",", data.aws_ssm_parameter.public_subnets.value), 0)
+  subnet_id              = element(split(",", data.aws_ssm_parameter.subnets.value), 0)
 
   associate_public_ip_address = var.associate_public_ip_address
   user_data                   = <<EOF

@@ -20,7 +20,6 @@ has on the auto scaling group provisioning resources for containers running on E
 
 * chaostoolkit-aws
 * chaostoolkit-grafana
-* chaostoolkit-aws-attacks
 
 ## Running the experiment
 
