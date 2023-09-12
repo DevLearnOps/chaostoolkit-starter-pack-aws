@@ -1,4 +1,4 @@
-# Documentation Index
+# Chaos Starter Pack for AWS
 
 1. [Getting started](getting-started.md)
 2. [Configuring experiments](experiments-configuration.md)
