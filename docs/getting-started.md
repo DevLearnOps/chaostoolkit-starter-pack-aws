@@ -352,6 +352,55 @@ For more information, see the [Chaos Toolkit official documentation][ctk-run-doc
 
 ## Running experiments using the `start-chaos.py` wrapper script
 
+Running chaos experiments with the Chaos Toolkit CLI is absolutely fine, but maintaining variable overrides to use in different contexts or environments can quickly become unmanageable if we don't find a way to organize them.
+
+Chaos Toolkit offers the ability to store collections of environment overrides into *JSON* or *YAML* files. This is perfect for handling variables, though we still have to remember additional configuration options like *rollback and hypothesis strategies* or *settings files*.
+
+To address these concerns, we created a *wrapper script* called `start-chaos.py` to allow users to structure their experiment variables and settings in a single configuration file.
+
+```shell
+python start-chaos.py --help
+# Usage: start-chaos.py [OPTIONS] CONFIG_FILE
+# 
+#   Cli to start a chaos experiment from a configuration definition
+# 
+# Options:
+#   -v, --verbose           Display debug level traces.
+#   --context TEXT          The execution context for the experiment
+#   --journals-bucket TEXT  The S3 bucket to upload journal files after
+#                           experiment execution
+#   --help                  Show this message and exit.
+```
+
+### The experiment configuration file for the wrapper script
+
+Using the `start-chaos.py` wrapper script we can define how our experiment should run in a single configuration file. The structure of the config file is as follow:
+
+```text
+[DEFAULT]
+experiment_path = ec2-instance-failure.yaml
+hypothesis_strategy = continuously
+hypothesis_frequency = 120
+fail_fast = true
+
+[development]
+var_overrides = 
+    environment             = dev
+    stress_duration_seconds = 900
+    stress_users            = 70
+
+# Specific configuration for production context
+[test]
+var_overrides = 
+    environment             = test
+    stress_duration_seconds = 900
+    stress_users            = 70
+
+
+# Specific configuration for production context
+[live]
+var_files = variables.yaml, variables-live.yaml
+```
 
 [chaostoolkit]: https://chaostoolkit.org
 [terraform]: https://www.terraform.io/
