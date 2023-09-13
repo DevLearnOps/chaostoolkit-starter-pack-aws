@@ -1,3 +1,5 @@
+THIS PAGE IS A WORK IN PROGRESS.
+
 * anatomy of the `experiment.conf` file
     - default section
     - custom sections
