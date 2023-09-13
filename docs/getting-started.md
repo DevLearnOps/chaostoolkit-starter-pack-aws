@@ -59,6 +59,13 @@ A Python utility to submit a chaos experiment request to the AWS Batch environme
 
 TODO
 
+### Experiments structure
+
+Even though Chaos Toolkit experiments don't need to follow project conventions, we think introducing some consistent structure in the way we organize experiment files can help avoid issues as we add more experiments and configuration files.
+
+TODO
+
+
 ## Setting up locally
 
 ### Setup the Python interpreter and Pip
@@ -147,22 +154,24 @@ chaos --version
 ## Installing additional dependencies
 Some of the chaos experiments provided with *ChaosToolkit Starter Pack for AWS* require additional dependencies to run. If that's the case, the experiment's `README` file will provide a list of additional software required to run.
 
-### Install Terraform and Terragrunt
+### Terraform and Terragrunt
 
 **ChaosToolkit Starter Pack for AWS** uses [Terraform][terraform] and [Terragrunt][terragrunt] to provision the infrastructure for the sample application and run experiments.
 
 * [Install Terraform](https://developer.hashicorp.com/terraform/downloads)
 * [Install Terragrunt](https://terragrunt.gruntwork.io/docs/getting-started/install/)
 
-### Install AWS CLI
+### AWS CLI
 
 * [Install the AWS CLI V2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
-### Install Grafana K6
+### Grafana K6
 
 **Grafana K6** is a load generation tool and required by the `chaostoolkit-grafana` Python extension for Chaos Toolkit. Follow the instructions in the [Official Grafana documentation](https://k6.io/docs/get-started/installation/) to install `k6` in your machine.
 
-### Install `aws-fail-az`
+* [Install Grafana K6](https://k6.io/docs/get-started/installation/)
+
+### AWS Fail AZ
 
 **aws-fail-az** is a Go program that simulates AZ (Availability Zone) failures on AWS resources. To install this tool, follow the installation instructions provided in the project's homepage:
 
@@ -374,7 +383,7 @@ python start-chaos.py --help
 
 ### The experiment configuration file for the wrapper script
 
-Using the `start-chaos.py` wrapper script we can define how our experiment should run in a single configuration file. The structure of the config file is as follow:
+Using the `start-chaos.py` wrapper script we can define how our experiment should run in a single configuration file. The structure of the config file is the following:
 
 ```text
 [DEFAULT]
@@ -383,13 +392,14 @@ hypothesis_strategy = continuously
 hypothesis_frequency = 120
 fail_fast = true
 
+# Specific configuration for development context
 [development]
 var_overrides = 
     environment             = dev
-    stress_duration_seconds = 900
-    stress_users            = 70
+    stress_duration_seconds = 120
+    stress_users            = 10
 
-# Specific configuration for production context
+# Specific configuration for test context
 [test]
 var_overrides = 
     environment             = test
@@ -401,6 +411,34 @@ var_overrides =
 [live]
 var_files = variables.yaml, variables-live.yaml
 ```
+
+To break down the sections in the configuration file we have:
+
+**[DEFAULT]**: this config section contains properties that will always be applied, regardless of the experiment *context*
+
+**[<section_name>]**: every additional section will represent a **context** in which we run chaos experiments. For instance we might need to run an experiment for just a few minutes on a *development* environment and specify a longer duration when using the *live* context
+
+Every section in this file (other than the *DEFAULT*) is mutually exclusive, meaning that if we run an experiment in a *live* context we will not inherit configurations that are specific for any other context.
+
+### How to run the experiment with the wrapper script
+
+Every experiment in the Starter Pack library has its own `experiment.conf` file that can be used with the wrapper.
+
+To start an experiment from a `*.conf` file we can use the following command *from the project's root directory*:
+
+```shell
+python start-chaos.py path/to/experiment.conf
+```
+
+By default the `start-chaos.py` will use the *DEFAULT* context. To run experiments with a different set of configurations we can use the `--context` argument:
+
+```shell
+python start-chaos.py \
+    --context live \
+    path/to/experiment.conf
+```
+
+### Additional wrapper script features
 
 [chaostoolkit]: https://chaostoolkit.org
 [terraform]: https://www.terraform.io/
