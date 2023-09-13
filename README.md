@@ -61,7 +61,34 @@ A Python utility to submit a chaos experiment request to the AWS Batch environme
 
 **Chaos Toolkit Starter Pack for AWS** comes with a library of reusable experiments that you can use to kick-start your chaos engineering project.
 
-Experiments are organized in separate directories under the [library/](library/) directory and into categories. Every experiment in the library can be tested with the provided **comments-app** sample application. Instructions on how to deploy **comments-app** into your AWS account are provided in the [Deploying the test infrastructure](#deploying-the-test-infrastructure) section.
+Experiments are organized in separate directories under the [library/](library/) directory and into categories. Every experiment in the library can be tested with the provided **comments-app** sample application.
+Instructions on how to deploy **comments-app** into your AWS account are provided in the [Deploying the test infrastructure](#deploying-the-test-infrastructure) section.
+
+Here is a list of available experiments:
+
+```text
+library
+├── reliability
+│   ├── ecs-instance-asg-fail-az
+│   ├── ecs-instance-burn-cpu
+│   ├── ecs-instance-kill-docker
+│   ├── ecs-instance-termination
+│   ├── ecs-service-fail-az
+│   ├── ecs-service-slow-datasource
+│   ├── ecs-service-slow-dependency
+│   ├── ecs-service-tasks-failure
+│   └── rds-instance-reboot
+└── scalability
+    ├── ecs-service-autoscaling
+    ├── ecs-service-cpu-scaling
+    ├── ecs-service-max-capacity-alarm
+    ├── ecs-service-scale-in
+    └── ecs-service-scale-out
+```
+
+Experiment directories are named using the following convention: `[aws-resource-type]-[fault-type]`. This way it's easier to understand what a test is about without having to look at the code.
+
+For instance, the `reliability/ecs-instance-burn-cpu` will introduce a CPU stressor (*burn-cpu*) to ECS instances (*ecs-instance*).
 
 ### Experiments structure
 
