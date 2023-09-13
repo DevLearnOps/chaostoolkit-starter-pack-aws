@@ -53,8 +53,8 @@ inputs = {
   #journals_bucket = "${get_env("AWS_ACCOUNT_ID")}-live-comments-persistent-ctk-journals"
 
   ## Enables remote connection to bastion server
-  ## If you with to enable remote connection into the infrastructure, uncomment the line below
-  ## and insert your bastion ssh-key name.
+  ## If you want to enable remote connection into the infrastructure, uncomment the line below
+  ## and insert your bastion ssh-key-pair name.
   #
   #bastion_key_pair_name = "<your-bastion-ssh-key>"
 
