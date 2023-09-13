@@ -55,6 +55,9 @@ A Python wrapper for Chaos Toolkit CLI that facilitates variables configuration 
 #### `submit-job.py`
 A Python utility to submit a chaos experiment request to the AWS Batch environment queue. For help see `./submit-job.py --help`.
 
+### How to find chaos experiments to run in the library
+
+TODO
 
 ## Setting up locally
 
@@ -200,13 +203,15 @@ infrastructure/
 
 The Terraform code that creates the app infrastructure is organized in different modules and tied together using Terragrunt. The `terragrunt` CLI will allow us to deploy the entire application stack using a single command.
 
-To deploy the infrastructure, first locate your AWS Account ID from the [AWS Console](http://console.aws.amazon.com) and export it as a variable in your current terminal together with the AWS Region and CLI profile:
+To deploy the infrastructure, first locate your AWS Account ID from the [AWS Console](http://console.aws.amazon.com) and export it as a variable in your current terminal together with the AWS Region and CLI profile (if different from default):
 
 ```shell
 export AWS_ACCOUNT_ID=XXXXXXXXXXXX
 export AWS_REGION=us-east-1
 export AWS_PROFILE=default
 ```
+
+Once you set the required environment variables, navigate to the `infrastructure/comments-app/` directory and use *Terragrunt* to apply all infrastructure modules:
 
 ```shell
 cd infrastructure/comments-app/
@@ -224,9 +229,126 @@ terragrunt run-all apply
 # <-- reply `y`
 ```
 
+> Provisioning the whole infrastructure takes approximately ~20 minutes as the creation of certain resources like RDS databases and Application Load Balancers can take some time.
 
+### Customize the "comments-app" infrastructure
+
+We use the `terragrunt.hcl` file to configure the infrastructure deployment.
+You can customize your deployment by editing the `infrastructure/comments-app/terragrunt.hcl` file to provide additional *Terraform variables*. 
+
+For instance, you can open a remote shell into the *bastion instance* created by Terraform to access AWS resources located in private subnets, like private ECS services or other EC2 instances.
+To do so, you first need to configure the name of your own **ssh-key-pair** in the `terragrunt.hcl`.
+
+If you don't already have an *ssh-key-pair* in your AWS account, you can create a new one under **EC2 > Network & Security > Key Pairs > Create key pair**, enter a name for the new key pair, for example *bastion-key-pair*, click **Create key pair** and download the `.pem` file.
+
+![create new key-pair](img/getting-started-create-key-pair-aws.jpeg)
+
+Next, edit the `infrastructure/comments-app/terragrunt.hcl` file and **locate or add the `bastion_key_pair_name` variable in the `inputs = {...}` section** to set our bastion ssh-key-pair name:
+
+```terraform
+# terragrunt.hcl
+
+inputs = {
+  ...
+
+  ## Enables remote connection to bastion server
+  ## If you want to enable remote connection into the infrastructure, uncomment the line below
+  ## and insert your bastion ssh-key-pair name.
+  #
+  bastion_key_pair_name = "bastion-key-pair"
+}
+```
+
+Once you're happy with the new configuration, run the `terragrunt` command again to apply the new changes:
+
+```shell
+cd infrastructure/comments-app/
+
+terragrunt run-all apply
+```
+
+### How to destroy the app infrastructure after use
+
+We do our best to minimize the impact the sample infrastructure will have on your AWS bill, but to contain costs it's best if you destroy the resources after you are done using them.
+To destroy all resource we again use *Terragrunt*:
+
+```shell
+export AWS_ACCOUNT_ID=XXXXXXXXXXXX
+export AWS_REGION=us-east-1
+export AWS_PROFILE=default
+
+cd infrastructure/comments-app/
+
+terragrunt run-all destroy
+# INFO[0000] The stack at infrastructure/comments-app will be processed in the following order for command destroy:
+# Group 1
+# - Module infrastructure/comments-app/services
+# 
+# Group 2
+# - Module infrastructure/comments-app/networking
+# 
+# Are you sure you want to run 'terragrunt destroy' in each folder of the stack described above? There is no undo! (y/n)
+#
+# <-- reply `y`
+```
 
 ## Running experiments locally with Chaos Toolkit CLI
+
+Once you deployed the sample *comments-app* into your AWS account, you can run the experiments in the **chaos experiments library** using Chaos Toolkit CLI.
+
+As we discussed in previous sections, the `library/` directory contains a collection of Chaos Toolkit experiments that can be executed against the sample *comments-app* application. For this example, we will run the **reliability/ecs-instance-termination/** experiment using Chaos Toolkit.
+
+### Prerequisites
+
+To run any experiment from the **ChaosToolkit Starter Pack for AWS** library, we first need to ensure that:
+* the AWS credentials and region are set in our session
+* the Python environment is configured to run Chaos Toolkit experiments
+
+To set our AWS environment we make sure the *AWS_REGION* and *AWS_PROFILE* variables are set:
+```shell
+export AWS_REGION=us-east-1
+export AWS_PROFILE=default
+```
+
+Then, we activate the Python virtual environment and set the *PYTHONPATH* variable so all Python modules in the `modules/` directory are discoverable:
+
+```shell
+source ./venv/bin/activate
+export PYTHONPATH=$(pwd)/modules
+```
+
+> IMPORTANT! Make sure your *PYTHONPATH* points to the `modules` directory in the root of this repository. To check the variable's current value run `echo $PYTHONPATH`.
+
+### Run the experiment template using the chaos CLI
+
+Every experiment you can find in the library has a **README.md** file to describe what the experiment does, additional requirements and run instructions.
+
+Open the `library/reliability/ecs-instance-termination/README.md` file and locate the run instructions provided in the *Running The Experiment* section.
+
+As indicated by the instructions, we can now launch the experiment by moving into the experiment folder and using the suggested `chaos` command:
+
+```shell
+cd library/reliability/ecs-instance-termination/
+chaos run \
+    --rollback-strategy always \
+    experiment.yaml
+```
+
+### Override experiment configuration using the chaos CLI
+
+Experiments offer several customization options using the Chaos Toolkit configuration. To modify the behaviour of an experiment we can override configuration values using the `--var` command line argument:
+
+```shell
+# override experiment's stress_user and stress_duration_seconds
+chaos run \
+    --rollback-strategy always \
+    --var 'stress_user:int=10' \
+    --var 'stress_duration_seconds:int=120' \
+    experiment.yaml
+```
+
+For more information, see the [Chaos Toolkit official documentation][ctk-run-docs].
+
 
 ## Running experiments using the `start-chaos.py` wrapper script
 
@@ -234,3 +356,4 @@ terragrunt run-all apply
 [chaostoolkit]: https://chaostoolkit.org
 [terraform]: https://www.terraform.io/
 [terragrunt]: https://terragrunt.gruntwork.io/
+[ctk-run-docs]: https://chaostoolkit.org/reference/usage/run/
