@@ -2,6 +2,17 @@ locals {
   sample_blog_port    = 80
 }
 
+resource "null_resource" "sync_container" {
+  count = var.deploy_sample_blog_application ? 1 : 0
+  provisioner "local-exec" {
+    command = <<EOF
+    aws ecr get-login-password --region ${local.region} \
+      | docker login --username AWS --password-stdin ${local.account_id}.dkr.ecr.${local.region}.amazonaws.com
+    docker pull ${local.registry_prefix}/${var.application_name}-blog-sample:${var.application_version}
+    EOF
+  }
+}
+
 module "sample_blog_alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "8.7.0"
@@ -70,7 +81,7 @@ module "sample_blog_service" {
       cpu       = local.cpu
       memory    = local.memory
       essential = true
-      image     = "375295184007.dkr.ecr.us-east-1.amazonaws.com/test-sample-blog:latest"// "${local.registry_prefix}/${var.application_name}-client:${var.application_version}"
+      image     = "${local.registry_prefix}/${var.application_name}-blog-sample:${var.application_version}"
       port_mappings = [
         {
           containerPort = local.sample_blog_port
