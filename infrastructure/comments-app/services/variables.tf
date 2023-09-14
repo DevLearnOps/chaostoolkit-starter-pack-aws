@@ -20,6 +20,12 @@ variable "bastion_key_pair_name" {
   default     = ""
 }
 
+variable "deploy_sample_blog_application" {
+  description = "(Optional) Deploy the sample blog application. Default: false"
+  type        = bool
+  default     = false
+}
+
 ########################################################################
 #  Application Variables
 ########################################################################

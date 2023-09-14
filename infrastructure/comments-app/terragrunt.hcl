@@ -64,4 +64,9 @@ inputs = {
   #
   #sns_notification_topic_name = "chaos-results-notification-topic"
 
+  ## Enables sample blog application
+  ## If you want to deploy a sample fontend blog application, uncomment the line below
+  #
+  #deploy_sample_blog_application = true
+
 }
