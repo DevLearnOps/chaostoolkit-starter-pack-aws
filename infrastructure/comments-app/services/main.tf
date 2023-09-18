@@ -374,7 +374,7 @@ module "api_service" {
 ###########################################################################
 #  Models bucket for spamcheck application
 ###########################################################################
-resource "aws_s3_bucket" "models_buket" {
+resource "aws_s3_bucket" "models_bucket" {
   bucket        = "${local.account_id}-${local.name}-spamcheck-models"
   force_destroy = true
 }
