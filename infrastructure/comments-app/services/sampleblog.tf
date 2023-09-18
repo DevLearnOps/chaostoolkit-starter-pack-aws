@@ -1,5 +1,5 @@
 locals {
-  sample_blog_port    = 80
+  sample_blog_port = 80
 }
 
 resource "null_resource" "sync_container" {
@@ -16,7 +16,7 @@ resource "null_resource" "sync_container" {
 module "sample_blog_alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "8.7.0"
-  count = var.deploy_sample_blog_application ? 1 : 0
+  count   = var.deploy_sample_blog_application ? 1 : 0
 
   name = "${local.name}-sample-blog"
 
@@ -51,16 +51,16 @@ module "sample_blog_alb" {
 }
 
 module "sample_blog_cluster" {
-  source  = "terraform-aws-modules/ecs/aws//modules/cluster"
-  version = "5.2.0"
-  count = var.deploy_sample_blog_application ? 1 : 0
+  source       = "terraform-aws-modules/ecs/aws//modules/cluster"
+  version      = "5.2.0"
+  count        = var.deploy_sample_blog_application ? 1 : 0
   cluster_name = "sample-blog-${local.name}-cluster"
 }
 
 module "sample_blog_service" {
-  source  = "terraform-aws-modules/ecs/aws//modules/service"
-  version = "5.2.0"
-  count = var.deploy_sample_blog_application ? 1 : 0
+  source      = "terraform-aws-modules/ecs/aws//modules/service"
+  version     = "5.2.0"
+  count       = var.deploy_sample_blog_application ? 1 : 0
   name        = "${var.application_name}-sample-blog-service"
   cluster_arn = module.sample_blog_cluster[0].arn
 

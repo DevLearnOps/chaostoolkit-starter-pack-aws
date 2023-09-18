@@ -371,6 +371,22 @@ module "api_service" {
   }
 }
 
+###########################################################################
+#  Models bucket for spamcheck application
+###########################################################################
+resource "aws_s3_bucket" "models_buket" {
+  bucket        = "${local.account_id}-${local.name}-spamcheck-models"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_object" "model_objects" {
+  for_each = fileset("../../resources/models/", "*.pkl")
+
+  bucket = aws_s3_bucket.models_bucket.id
+  key    = each.key
+  source = each.key
+}
+
 module "spamcheck_service" {
   source  = "terraform-aws-modules/ecs/aws//modules/service"
   version = "5.2.0"
@@ -417,6 +433,8 @@ module "spamcheck_service" {
       ]
       environment = [
         { "name" : "APPLICATION_PATH_BASE", "value" : local.spamcheck_prefix },
+        { "name" : "MODELS_LOCATION", "value" : "/app/models/" },
+        { "name" : "MODELS_SOURCE_LOCATION_S3", "value" : "s3://${aws_s3_bucket.models_bucket.id}" },
       ]
       readonly_root_filesystem = false
     }
