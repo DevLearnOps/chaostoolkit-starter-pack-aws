@@ -457,13 +457,20 @@ module "spamcheck_service" {
   )
 
   tasks_iam_role_statements = {
-    exec_command = {
+    get_s3_objects = {
       actions = [
-        "s3:*",
+        "s3:Get*",
+      ]
+      effect    = "Allow"
+      resources = ["${aws_s3_bucket.models_bucket.arn}/*"]
+    },
+    list_bucket_objects = {
+      actions = [
+        "s3:List*",
       ]
       effect    = "Allow"
       resources = [aws_s3_bucket.models_bucket.arn]
-    }
+    },
   }
 }
 

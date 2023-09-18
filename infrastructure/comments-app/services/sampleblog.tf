@@ -69,7 +69,7 @@ module "sample_blog_cluster" {
   source       = "terraform-aws-modules/ecs/aws//modules/cluster"
   version      = "5.2.0"
   count        = var.deploy_sample_blog_application ? 1 : 0
-  cluster_name = "sample-blog-${local.name}-cluster"
+  cluster_name = "${local.name}-sample-blog-cluster"
 }
 
 module "sample_blog_service" {
@@ -86,9 +86,9 @@ module "sample_blog_service" {
 
   force_delete = local.ecs_service_force_delete
 
-  desired_count            = var.autoscaling_min_capacity
-  autoscaling_min_capacity = var.autoscaling_min_capacity
-  autoscaling_max_capacity = var.autoscaling_max_capacity
+  desired_count            = 1
+  autoscaling_min_capacity = 1
+  autoscaling_max_capacity = 1
 
   container_definitions = {
     main = {
