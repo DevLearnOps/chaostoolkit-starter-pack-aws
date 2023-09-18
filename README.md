@@ -37,7 +37,7 @@ The `infrastructure/` directory contains the Terraform code to deploy the sample
 The `library/` directory contains all Chaos Toolkit experiment examples provided with the starter pack.
 
 * **modules/**:
-The `modules/` directory contains Python modules that provide custom Chaos Toolkit activities used in experiments.
+The `modules/` directory contains Python modules that provide custom Chaos Toolkit activities and controls used by experiments.
 
 * **my-experiments/**:
 The `my-experiments/` directory is an empty placeholder to store user-created experiments.
