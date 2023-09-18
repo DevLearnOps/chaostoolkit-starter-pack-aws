@@ -39,6 +39,8 @@ locals {
   spamcheck_prefix = "/spam"
   api_prefix       = "/api"
 
+  spamcheck_models_local_path = "../../resources/models/"
+
   container_egress_rules = {
     egress_vpc_cidr = {
       type        = "egress"
@@ -359,16 +361,6 @@ module "api_service" {
     },
     local.container_egress_rules,
   )
-
-  tasks_iam_role_statements = {
-    exec_command = {
-      actions = [
-        "s3:*",
-      ]
-      effect    = "Allow"
-      resources = ["*"]
-    }
-  }
 }
 
 ###########################################################################
@@ -379,12 +371,12 @@ resource "aws_s3_bucket" "models_bucket" {
   force_destroy = true
 }
 
-resource "aws_s3_bucket_object" "model_objects" {
-  for_each = fileset("../../resources/models/", "*.pkl")
+resource "aws_s3_object" "model_objects" {
+  for_each = fileset(local.spamcheck_models_local_path, "*.pkl")
 
   bucket = aws_s3_bucket.models_bucket.id
   key    = each.key
-  source = each.key
+  source = "${local.spamcheck_models_local_path}/${each.key}"
 }
 
 module "spamcheck_service" {
@@ -463,6 +455,16 @@ module "spamcheck_service" {
     },
     local.container_egress_rules,
   )
+
+  tasks_iam_role_statements = {
+    exec_command = {
+      actions = [
+        "s3:*",
+      ]
+      effect    = "Allow"
+      resources = [aws_s3_bucket.models_bucket.arn]
+    }
+  }
 }
 
 module "web_service" {

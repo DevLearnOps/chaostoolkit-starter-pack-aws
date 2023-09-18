@@ -67,6 +67,6 @@ inputs = {
   ## Enables sample blog application deployment
   ## If you want to deploy a sample fontend blog application, uncomment the line below
   #
-  #deploy_sample_blog_application = true
+  deploy_sample_blog_application = true
 
 }
