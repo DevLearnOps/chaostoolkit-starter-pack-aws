@@ -13,6 +13,21 @@ resource "null_resource" "sync_container" {
   }
 }
 
+module "sample_blog_alb_security_group" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "5.1.0"
+
+  name        = "${local.name}-blog-alb-sg"
+  description = "Application load balancer security group for sample blog for ${var.application_name} app"
+  vpc_id      = data.aws_ssm_parameter.vpc_id.value
+
+  ingress_rules       = ["http-80-tcp"]
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+
+  egress_rules       = ["all-all"]
+  egress_cidr_blocks = [data.aws_ssm_parameter.vpc_cidr_block.value]
+}
+
 module "sample_blog_alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "8.7.0"
@@ -25,7 +40,7 @@ module "sample_blog_alb" {
 
   vpc_id          = data.aws_ssm_parameter.vpc_id.value
   subnets         = split(",", data.aws_ssm_parameter.public_subnets.value)
-  security_groups = [module.alb_security_group.security_group_id]
+  security_groups = [module.sample_blog_alb_security_group.security_group_id]
 
   http_tcp_listeners = [
     {
@@ -107,14 +122,12 @@ module "sample_blog_service" {
   security_group_rules = merge(
     {
       alb_ingress_80 = {
-        type        = "ingress"
-        description = "Allow from LB to service port"
-        from_port   = local.sample_blog_port
-        to_port     = local.sample_blog_port
-        protocol    = "tcp"
-        # Chaos :: Insecure practice should get discovered by alb/ecs-alb-insgress/experiment.yaml
-        cidr_blocks = ["0.0.0.0/0"]
-        #source_security_group_id = module.alb_security_group.security_group_id
+        type                     = "ingress"
+        description              = "Allow from LB to service port"
+        from_port                = local.sample_blog_port
+        to_port                  = local.sample_blog_port
+        protocol                 = "tcp"
+        source_security_group_id = module.sample_blog_alb_security_group.security_group_id
       }
     },
     local.container_egress_rules,
