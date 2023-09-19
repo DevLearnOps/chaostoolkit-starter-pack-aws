@@ -1,0 +1,64 @@
+title: RDS Instance Reboot
+description: >-
+  This experiment will restart an RDS instance to verify our application can continue to operate
+  after the DB becomes available again.
+
+contributions:
+  security: "low"
+  reliability: "high"
+  scalability: "low"
+
+########################################################
+#  Configuration
+########################################################
+configuration:
+  environment: "live"
+  db_instance_identifier: "live-chaos-comments-db"
+  acceptable_downtime: 120
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/${environment}/app/comments/web_url"
+
+########################################################
+#  Hypothesis
+########################################################
+steady-state-hypothesis:
+  title: "service-is-stable"
+  probes:
+    - name: "service-responsive"
+      type: probe
+      tolerance: 200
+      provider:
+        type: http
+        url: "${application_url}/users"
+        method: GET
+        timeout: 2
+    - name: "instance-status"
+      type: probe
+      tolerance: available
+      provider:
+        type: python
+        module: chaosaws.rds.probes
+        func: instance_status
+        arguments:
+          instance_id: ${db_instance_identifier}
+
+########################################################
+#  Method
+########################################################
+method:
+  - name: "reboot-db-instance"
+    type: action
+    provider:
+      type: python
+      module: chaosaws.rds.actions
+      func: reboot_db_instance
+      arguments:
+        db_instance_identifier: ${db_instance_identifier}
+    pauses:
+      after: ${acceptable_downtime}

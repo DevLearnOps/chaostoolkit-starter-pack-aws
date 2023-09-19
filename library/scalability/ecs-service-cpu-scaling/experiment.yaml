@@ -1,0 +1,70 @@
+title: ECS Service CPU Scaling
+description: >-
+  Autoscaling tuning, this experiment verifies the configured CPU scaling policy for the
+  targeted service can scale-out tasks based on CPU utilization only. This is important
+  to make sure the service can cope with user load even in the event of an unforeseen CPU
+  spike.
+
+contributions:
+  security: "none"
+  reliability: "medium"
+  scalability: "high"
+
+configuration:
+  environment: "live"
+  acceptable_scaling_time: 300
+  expected_container_count: 4
+  cluster_name: "live-chaos-comment-cluster"
+  service_name: "comments-api-service"
+
+steady-state-hypothesis:
+  title: "Verify autoscaling on CPU"
+  probes:
+    - name: "autoscaling-should-set-max-container-count"
+      type: probe
+      tolerance: true
+      provider:
+        type: python
+        module: devlearnops.aws.ecs.probes
+        func: wait_for_service_attribute
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+          attribute: "desiredCount"
+          expected: ${expected_container_count}
+          timeout: ${acceptable_scaling_time}
+    - name: "desired-equals-running"
+      type: probe
+      tolerance: true
+      provider:
+        type: python
+        module: chaosaws.ecs.probes
+        func: are_all_desired_tasks_running
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+
+method:
+  - type: action
+    name: "stress-cpu"
+    provider:
+      type: python
+      module: devlearnops.aws.ecs.actions
+      func: install_container_hog
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+        hog_configuration:
+          type: cpu
+          cpu_load: 80
+        hog_delay_seconds: 60
+        hog_image: "ecr-public/i5e3i8t5/ecs-container-hog:latest"
+        wait_service_stable: true
+
+rollbacks:
+  - type: action
+    name: "restore-services"
+    provider:
+      type: python
+      module: devlearnops.aws.ecs.actions
+      func: restore_services

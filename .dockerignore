@@ -1,0 +1,16 @@
+.git
+.github
+infrastructure/
+tools/
+.flake8
+.gitignore
+.venv
+__pycache__
+Makefile
+Pipfile*
+README.md
+**/.terraform/
+**/.terraform*
+**/terraform.tfstate*
+chaostoolkit.log
+journal.json

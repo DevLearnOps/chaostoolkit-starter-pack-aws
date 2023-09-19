@@ -1,0 +1,67 @@
+title: ECS Service Scale-Out
+description: >-
+  This experiment validates the service can scale-out containers quickly when
+  additional capacity is required to handle increased load on the application.
+  To simulate production-like conditions we use Grafana k6 to generate synthetic
+  user load and then ask the service to spawn up additional containers.
+
+contributions:
+  security: "low"
+  reliability: "medium"
+  scalability: "high"
+
+configuration:
+  environment: "live"
+  cluster_name: "live-chaos-comment-cluster"
+  service_name: "comments-api-service"
+  desired_tasks_count: 4
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/${environment}/app/comments/web_url"
+
+steady-state-hypothesis:
+  title: "service-is-stable"
+  probes:
+    - type: probe
+      name: "site-responsive"
+      tolerance: true
+      provider:
+        func: http
+        module: chaosgrafana.k6.probes
+        type: python
+        arguments:
+          endpoint: ${application_url}/users
+          method: GET
+          timeout: 5
+          duration: 10s
+          vus: 2
+    - name: "all-tasks-should-be-running"
+      type: probe
+      tolerance: true
+      provider:
+        type: python
+        module: devlearnops.aws.ecs.probes
+        func: wait_for_service_attribute
+        arguments:
+          cluster: ${cluster_name}
+          service: ${service_name}
+          attribute: "runningCount"
+          expected: ${desired_tasks_count}
+          timeout: 240
+
+method:
+  - name: "update-desired-count"
+    type: action
+    provider:
+      type: python
+      module: chaosaws.ecs.actions
+      func: update_desired_count
+      arguments:
+        cluster: ${cluster_name}
+        service: ${service_name}
+        desired_count: ${desired_tasks_count}

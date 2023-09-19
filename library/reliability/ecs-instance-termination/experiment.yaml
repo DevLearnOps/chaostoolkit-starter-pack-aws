@@ -1,0 +1,101 @@
+title: ECS Instance Termination
+description: >-
+  This experiment will terminate half of the running container instances
+  running on EC2. ECS cluster should self-heal and respawn new instances.
+
+contributions:
+  security: "none"
+  reliability: "high"
+  scalability: "medium"
+
+########################################################
+#  Configuration
+########################################################
+configuration:
+  environment: live
+  stress_users: 30
+  stress_duration_seconds: "300"
+  cpu_load_percent: "20"
+  autoscaling_group_name:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/${environment}/app/comments/autoscaling_group/ondemand/name"
+
+  script_file: "../../load-generation/comments-k6/spam_comments.js"
+  application_url:
+    type: probe
+    provider:
+      type: python
+      module: devlearnops.aws.ssm.probes
+      func: get_parameter
+      arguments:
+        name: "/${environment}/app/comments/web_url"
+
+########################################################
+#  Hypothesis
+########################################################
+steady-state-hypothesis:
+  title: "service-should-not-fail"
+  probes:
+    - type: probe
+      name: "alarms-should-be-in-expected-state"
+      tolerance: true
+      provider:
+        type: python
+        module: devlearnops.aws.cloudwatch.probes
+        func: check_alarm_state_value
+        arguments:
+          alarm_names:
+            - "Target_5XX_Response-Count/${environment}/comments/internal-alb"
+            - "TargetResponseTime-Avg/${environment}/comments/public-alb"
+          expected: ["OK", "INSUFFICIENT_DATA"]
+
+    - type: probe
+      name: "all-asg-instances-running"
+      tolerance: true
+      provider:
+        type: python
+        module: chaosaws.asg.probes
+        func: desired_equals_healthy
+        arguments:
+          asg_names:
+            - ${autoscaling_group_name}
+
+########################################################
+#  Method
+########################################################
+method:
+  - name: "spam-load-generation"
+    type: action
+    background: true
+    provider:
+      type: python
+      module: chaosgrafana.k6.actions
+      func: run_script
+      arguments:
+        script_path: ${script_file}
+        stages:
+          - duration: "1m"
+            target: ${stress_users}
+          - duration: "${stress_duration_seconds}s"
+            target: ${stress_users}
+        environ:
+          COMMENTS_URL: "${application_url}"
+          SPAM_BATCH_SIZE: "20"
+
+  - name: "terminate-container-instances"
+    type: action
+    provider:
+      type: python
+      module: chaosaws.asg.actions
+      func: terminate_random_instances
+      arguments:
+        asg_names:
+          - ${autoscaling_group_name}
+        instance_percent: 50
+    pauses:
+      before: 60
