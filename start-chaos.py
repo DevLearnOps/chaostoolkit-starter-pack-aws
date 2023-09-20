@@ -194,7 +194,7 @@ def cli(verbose: bool, context: str, journals_bucket: str, config_file: str):
 
     config = ExperimentConfig().read(config_file, context=context)
 
-    command = ["chaos", "run"]
+    command = ["chaos", "--no-version-check", "run"]
     if verbose:
         command.insert(1, "--verbose")
 

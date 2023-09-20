@@ -14,7 +14,7 @@ has on the auto scaling group provisioning resources for containers running on E
 **Additional Software**
 
 * Grafana K6
-* [AWS Fail AZ][https://github.com/mcastellin/aws-fail-az]
+* [AWS Fail AZ](https://github.com/mcastellin/aws-fail-az)
 
 **Python Packages**
 
