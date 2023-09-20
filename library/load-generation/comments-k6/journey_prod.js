@@ -7,15 +7,15 @@ import {
 } from 'k6';
 
 const users = new SharedArray('users', function() {
-    const data = JSON.parse(open('../users.json'));
+    const data = JSON.parse(open('../data/users.json'));
     return data;
 });
 const posts = new SharedArray('posts', function() {
-    const data = JSON.parse(open('../posts.json'));
+    const data = JSON.parse(open('../data/posts.json'));
     return data;
 });
 const comments = new SharedArray('comments', function() {
-    const data = JSON.parse(open('../comments.json'));
+    const data = JSON.parse(open('../data/comments.json'));
     return data;
 });
 const host = __ENV.COMMENTS_URL ? __ENV.COMMENTS_URL : 'http://localhost:3000';

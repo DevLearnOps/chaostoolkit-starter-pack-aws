@@ -1,5 +1,4 @@
 import json
-import random
 
 HANDLES = """    sparkleforests
     foozlebooze
@@ -460,7 +459,7 @@ for idx, handle in enumerate(HANDLES.split("\n")):
         }
     )
 
-with open("./users.json", "w", encoding="utf-8") as file:
+with open("./data/users.json", "w", encoding="utf-8") as file:
     json.dump(users, file)
 
 posts = []
@@ -475,19 +474,19 @@ for idx, permalink in enumerate(PERMALINKS.split("\n")):
         }
     )
 
-with open("./posts.json", "w", encoding="utf-8") as file:
+with open("./data/posts.json", "w", encoding="utf-8") as file:
     json.dump(posts, file)
 
 comments = []
 for _, comment in enumerate(COMMENTS.split("\n")):
     comments.append({"content": comment.strip().strip('"')})
 
-with open("./comments.json", "w", encoding="utf-8") as file:
+with open("./data/comments.json", "w", encoding="utf-8") as file:
     json.dump(comments, file)
 
 spam_comments = []
 for comment in SPAM_COMMENTS:
     spam_comments.append({"content": comment.strip().strip('"')})
 
-with open("./spam_comments.json", "w", encoding="utf-8") as file:
+with open("./data/spam_comments.json", "w", encoding="utf-8") as file:
     json.dump(spam_comments, file)
