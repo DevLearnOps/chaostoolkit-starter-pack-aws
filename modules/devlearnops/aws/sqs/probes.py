@@ -1,11 +1,9 @@
 import json
 import time
-from typing import Any, List
 
 from chaosaws import aws_client
 from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
-from logzero import logger
 
 __all__ = ["wait_for_alarm_notification"]
 
@@ -37,6 +35,27 @@ def wait_for_alarm_notification(
     configuration: Configuration = None,
     secrets: Secrets = None,
 ) -> str:
+    """
+    Waits for an alarm notification to be published to an SQS topic
+
+    Parameters
+    ----------
+    queue_url: str
+        The AWS SQS queue url
+    topic_arn: str
+        The Arn of the topic
+    alarm_name: str
+        The name of the alarm that generated the notification
+    consume_message: bool
+        If set to True, the function will consume the message and remove it from
+        the queue. Default: True
+    timeout: int
+        The timeout in seconds for the message to be received
+
+    Returns
+    -------
+    str: the content of the notification
+    """
     client = aws_client("sqs", configuration, secrets)
 
     time_limit = time.time() + timeout

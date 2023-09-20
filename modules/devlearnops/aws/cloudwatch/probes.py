@@ -1,7 +1,6 @@
 from typing import Any, List
 
 from chaosaws.cloudwatch.probes import get_alarm_state_value
-from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
 from logzero import logger
 

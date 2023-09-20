@@ -1,10 +1,8 @@
 import time
-from typing import Any, Dict
 
 import requests
 from chaoslib.exceptions import FailedActivity
 from chaoslib.types import Configuration, Secrets
-from logzero import logger
 
 __all__ = ["wait_for_service_active"]
 
