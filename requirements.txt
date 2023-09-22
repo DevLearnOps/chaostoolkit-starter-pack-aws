@@ -2,10 +2,10 @@ click==8.1.6
 boto3>=1.28.12
 jsonpath2==0.4.5
 marshmallow==3.20.1
-chaostoolkit==1.15.1
+chaostoolkit==1.16.0
 chaostoolkit-lib==1.37.0
 chaostoolkit-aws==0.23.4
-chaostoolkit-addons==0.8.6
+chaostoolkit-addons==0.9.0
 chaostoolkit-terraform==0.0.9
 chaostoolkit-toxiproxy==0.3.1
 git+https://github.com/chaostoolkit-incubator/chaostoolkit-grafana.git@master#egg=chaostoolkit-grafana

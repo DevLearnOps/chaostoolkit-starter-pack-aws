@@ -416,7 +416,7 @@ chaos run \
 For more information, see the [Chaos Toolkit official documentation][ctk-run-docs].
 
 
-## Running experiments using the `start-chaos.py` wrapper script
+## Running experiments using the "start-chaos.py" wrapper script
 
 Running chaos experiments with the Chaos Toolkit CLI is absolutely fine, but maintaining variable overrides to use in different contexts or environments can quickly become unmanageable if we don't find a way to organize them.
 

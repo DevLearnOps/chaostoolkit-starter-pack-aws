@@ -8,7 +8,18 @@ from chaoslib.exceptions import FailedActivity
 
 
 def check_program_exists(program: str):
-    """Check if aws-fail-az program is installed in the system"""
+    """
+    Check if a program is installed in the system
+
+    Parameters
+    ----------
+    program: str
+        the name of the command-line program
+
+    Raises
+    ------
+    FailedActivity: if program is not available in the system
+    """
     if shutil.which(program) is None:
         raise FailedActivity(
             f"Unable to simulate az failure. `{program}` program is not installed in the system"

@@ -15,7 +15,7 @@ available, though this effect should resolve itself in a short amount of time.
 **Additional Software**
 
 * Grafana K6
-* [AWS Fail AZ][https://github.com/mcastellin/aws-fail-az]
+* [AWS Fail AZ](https://github.com/mcastellin/aws-fail-az)
 
 **Python Packages**
 

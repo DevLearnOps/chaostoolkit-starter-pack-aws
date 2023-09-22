@@ -58,7 +58,7 @@ method:
           type: cpu
           cpu_load: 80
         hog_delay_seconds: 60
-        hog_image: "ecr-public/i5e3i8t5/ecs-container-hog:latest"
+        hog_image: "ecr-public/devlearnops/ecs-container-hog:latest"
         wait_service_stable: true
 
 rollbacks:
