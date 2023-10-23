@@ -74,3 +74,9 @@ variable "java_service_memory" {
   type        = number
   default     = 2048
 }
+
+variable "alb_access_logs_to_bucket_enabled" {
+  description = "(Optional) Store ALB access logs to S3 bucket"
+  type        = bool
+  default     = false
+}

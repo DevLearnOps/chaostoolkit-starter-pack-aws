@@ -65,3 +65,12 @@ resource "aws_ssm_parameter" "application_db_instance_address" {
   value = module.application_database.db_instance_address
   type  = "String"
 }
+
+########################################################################
+#  Logging Parameters
+########################################################################
+resource "aws_ssm_parameter" "application_access_logs_bucket" {
+  name  = "/${var.environment}/app/${var.application_name}/access_logs_bucket"
+  value = aws_s3_bucket.access_logs.id
+  type  = "String"
+}

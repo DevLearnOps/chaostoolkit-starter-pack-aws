@@ -123,6 +123,11 @@ module "public_alb" {
       deregistration_delay = local.tg_deregistration_delay
     },
   ]
+
+  access_logs = {
+    bucket  = data.aws_ssm_parameter.application_access_logs_bucket.value
+    enabled = var.alb_access_logs_to_bucket_enabled
+  }
 }
 
 module "internal_alb" {

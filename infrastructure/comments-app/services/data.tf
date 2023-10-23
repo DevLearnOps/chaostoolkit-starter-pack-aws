@@ -33,3 +33,7 @@ data "aws_ssm_parameter" "application_db_username" {
 data "aws_ssm_parameter" "application_db_connection_string" {
   name = "/${var.environment}/app/${var.application_name}/db_connection_string"
 }
+
+data "aws_ssm_parameter" "application_access_logs_bucket" {
+  name = "/${var.environment}/app/${var.application_name}/access_logs_bucket"
+}

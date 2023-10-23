@@ -68,4 +68,8 @@ inputs = {
   ## If you want to deploy a sample fontend blog application, uncomment the line below
   #
   #deploy_sample_blog_application = true
+
+  ## Retain application load balancers access logs in an S3 bucket
+  #
+  alb_access_logs_to_bucket_enabled = true
 }
