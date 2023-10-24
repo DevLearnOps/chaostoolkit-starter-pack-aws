@@ -1,7 +1,8 @@
-title: Dummy experiment for testing
+title: S3 Bucket Ransomware Attack
 description: |-
-  This experiment is designed to run quickly and have no effect on the system.
-  Useful for framework development.
+  This experiment is designed to verify that our Information Security Engineers
+  are notified timely in case of a ransomware attack to our S3 buckets that
+  contain sensitive information.
 
 contributions:
   security: "none"
@@ -9,27 +10,58 @@ contributions:
   scalability: "none"
 
 configuration:
-  application_url: "https://www.google.com/"
-  duration: 10s
+  infosec_topic_arn: "arn:aws:sns:us-east-1:309172550216:live-chaos-infosec-updates"
+  target_alarm_name: "Sec-High-BucketGetRequests/live/comments"
+
+controls:
+  - name: "configure-alarm-with-terraform"
+    provider:
+      type: python
+      module: chaosterraform.control
+      arguments:
+        silent: false
+        retain: false
+        variables:
+          topic_arn:
+            name: infosec_topic_arn
 
 steady-state-hypothesis:
-  title: "Verify web server is available"
+  title: "SRE should be notified of potential ransomware"
   probes:
     - type: probe
-      name: "site-responsive"
-      tolerance: 200
+      name: "wait-for-notification"
+      tolerance:
+        type: regex
+        pattern: "ALARM"
+        target: "NewStateValue"
       provider:
-        type: http
-        url: ${application_url}
+        type: python
+        module: devlearnops.aws.sqs.probes
+        func: wait_for_alarm_notification
+        arguments:
+          queue_url: ${tf_out__queue_url}
+          topic_arn: ${infosec_topic_arn}
+          alarm_name: ${target_alarm_name}
+          timeout: 300
+          consume_message: true
 
 method:
-  - name: "create-dummies"
+  - name: "create-dummy-objects"
     type: action
     provider:
       type: python
       module: devlearnops.aws.s3.attacks
       func: put_dummy_objects
       arguments:
-        bucket_name: "309172550216-live-chaos-access-logs"
-        objects_count: 10
-        prefix: "test"
+        bucket_name: ${tf_out__bucket_name}
+        objects_count: 50
+  - name: "attack-s3-bucket"
+    type: action
+    provider:
+      type: python
+      module: devlearnops.aws.s3.attacks
+      func: ransom_full_attack
+      arguments:
+        bucket_name: ${tf_out__bucket_name}
+        num_operations: 250
+        delete_delay_seconds: 30
