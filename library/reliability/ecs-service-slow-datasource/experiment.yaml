@@ -19,6 +19,7 @@ controls:
       type: python
       module: chaosterraform.control
       arguments:
+        silent: false
         chdir: ../../stacks/proxy/
         variables:
           environment:

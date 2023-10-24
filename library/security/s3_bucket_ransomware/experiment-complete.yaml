@@ -42,7 +42,7 @@ steady-state-hypothesis:
           queue_url: ${tf_out__queue_url}
           topic_arn: ${infosec_topic_arn}
           alarm_name: ${target_alarm_name}
-          timeout: 300
+          timeout: 120 # not enough time for the alarm to trigger (on purpose)
           consume_message: true
 
 method:
